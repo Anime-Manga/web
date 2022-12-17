@@ -1,3 +1,6 @@
+
+[![Docker Image CI Main](https://github.com/Anime-Manga/web/actions/workflows/docker-image.yml/badge.svg/badge.svg?branch=main)](https://github.com/Anime-Manga/web/actions/workflows/docker-image.yml) 
+
 ## 🌐Web Server
 Questo progetto verrà utilizzato per gli utenti che vorranno visualizzare e scaricare gli episodi.
 

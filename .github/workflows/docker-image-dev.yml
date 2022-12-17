@@ -19,7 +19,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v4.1.1
       with:
-        images: ${{ secrets.DOCKER_USER }}/animemanga-web:dev
+        images: ${{ secrets.DOCKER_USER }}/animemanga-web:1.0.0_DEV
         
     - name: Build the Docker image Web
       uses: docker/build-push-action@v3

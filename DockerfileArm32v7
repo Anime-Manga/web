@@ -2,7 +2,7 @@ FROM arm32v7/node:16.14
 
 WORKDIR /app
 
-COPY ["src/web/", "./"]
+COPY ["src/", "./"]
 
 COPY . .
 
