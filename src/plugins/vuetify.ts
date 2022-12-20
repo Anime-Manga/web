@@ -40,6 +40,7 @@ export default defineNuxtPlugin(nuxtApp => {
                 book: 'fa-book',
                 x:'xmark',
                 arrowLeft:'arrow-left',
+                arrowRight: 'fa-arrow-right',
                 link: 'fa-link',
                 download: 'fa-download',
                 redownload: 'fa-rotate-left',

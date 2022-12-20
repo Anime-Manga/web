@@ -70,7 +70,7 @@
             </template>
               <template v-else>
                 <div class="my-3">
-                  <NuxtLink :to="'/room?type=manga&chapter='+media.id">
+                  <NuxtLink :to="`/room?type=manga&chapter=${media.id}&manga=${item.name}`">
                     <v-btn
                         color="primary"
                         block
