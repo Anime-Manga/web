@@ -7,17 +7,18 @@
     <div
         class="d-flex flex-column align-center"
     >
-      <v-btn
-          style="color: white !important;"
-          color="info"
-          @click="close()"
-      >
-        Go to Home
-      </v-btn>
       <div
           v-if="type === 'anime'"
           class="ma-2"
       >
+        <v-btn
+            style="color: white !important;"
+            color="info"
+            class="ma-1"
+            @click="close()"
+        >
+          Go to Home
+        </v-btn>
         <video id="my-video" controls>
           <template v-if="episode != null && data != null">
             <source :src="getUrl(data.episodePath)" type="video/mp4">
@@ -25,21 +26,107 @@
         </video>
       </div>
       <div
-        v-if="type === 'manga' && !checkNull(data)"
-        class="text-center d-flex flex-column"
+          v-if="type === 'manga' && !checkNull(data)"
+          class="text-center d-flex flex-column fill-height justify-center"
       >
-        <template v-for="(chapter, index) in data.chapterPath" :key="chapter">
-          <img
-              :src="getUrl(chapter)"
-              class="img-page"
-          >
-        </template>
         <v-btn
             style="color: white !important;"
             color="info"
+            class="mt-1"
+            block
             @click="close()"
         >
           Go to Home
+        </v-btn>
+        <div id="my-manga">
+          <div class="d-flex flex-row align-center justify-center">
+            <div
+                v-if="indexPage > 0 && (!modeMobile)"
+                class="btn-page"
+                @click="previousPage"
+            >
+              <v-icon>
+                $arrowLeft
+              </v-icon>
+            </div>
+            <template v-if="data">
+              <template v-if="modeMobile">
+                <div id="closeFullscreenMobile">
+                  <v-icon
+                      @click="closeFullscreenMobile"
+                      color="white"
+                  >
+                    $x
+                  </v-icon>
+                </div>
+              </template>
+              <div class="contain-page">
+                <img
+                    :src="getUrl(data.chapterPath[indexPage])"
+                    class="img-page pa-1"
+                    @click="changePage"
+                />
+              </div>
+            </template>
+            <div
+                v-if="indexPage < (data.chapterPath.length - 1) && (!modeMobile)"
+                class="btn-page"
+                @click="nextPage"
+            >
+              <v-icon>
+                $arrowRight
+              </v-icon>
+            </div>
+          </div>
+          <div>
+            <div
+                v-if="data"
+                class="currentPage"
+            >
+              <span class="d-block">{{$route.query.chapter}}</span>
+              <span class="d-block">{{ indexPage + 1 }}/{{ data.chapterPath.length }}</span>
+            </div>
+          </div>
+          <div class="d-flex flex-row justify-space-around flex-wrap mb-2">
+            <NuxtLink
+                v-if="getPreviousChapter"
+                :to="`/room?type=manga&chapter=${getPreviousChapter}&manga=${$route.query.manga}`"
+                class="text-decoration-none"
+            >
+              <v-btn
+                color="primary"
+              >
+                <v-icon
+                  class="mr-2"
+                >
+                  $arrowLeft
+                </v-icon>
+                Next chapter
+              </v-btn>
+            </NuxtLink>
+            <div  v-else> </div>
+            <NuxtLink
+                v-if="nextChapter"
+                :to="`/room?type=manga&chapter=${nextChapter}&manga=${$route.query.manga}`"
+                class="text-decoration-none"
+            >
+              <v-btn
+                  color="secondary"
+              >
+                Previous chapter
+                <v-icon
+                    class="ml-2"
+                >
+                  $arrowRight
+                </v-icon>
+              </v-btn>
+            </NuxtLink>
+          </div>
+        </div>
+        <v-btn
+            @click="fullScreen"
+        >
+          full screen
         </v-btn>
       </div>
       <div
@@ -76,6 +163,7 @@ import lodash from "../../mixins/lodash";
 
 import userSession from "../../component/userSession";
 import mitt from 'mitt';
+
 export default {
   name: 'room',
   components: {
@@ -88,8 +176,8 @@ export default {
     const runtimeConfig = useRuntimeConfig();
 
     return {
-      data: null,
       hide: "",
+      data: null,
 
       hostSocket: runtimeConfig.public.socketBase,
       hostHTTP: runtimeConfig.public.httpBase,
@@ -105,19 +193,20 @@ export default {
       episode: null,
       pause: null,
       time: 0,
-      room:null,
-      type:null,
+      room: null,
+      type: null,
+
+      indexPage: 0,
+      chapters: [],
+      modeMobile: false
     }
   },
-  created() {
-    this.type = this.$route.query.type;
-  },
   mounted() {
-    if(this.type === 'manga')
-    {
+    this.type = this.$route.query.type;
+
+    if (this.type === 'manga') {
       this.load();
-    }else if(this.type === 'anime')
-    {
+    } else if (this.type === 'anime') {
       this.room = mitt();
 
       console.log("Starting connection to WebSocket Server");
@@ -225,7 +314,71 @@ export default {
       });
     }
   },
+  computed: {
+    getPreviousChapter() {
+      if (this.chapters.length <= 0)
+        return null;
+
+      const chapterId = this.data.chapterId;
+
+      const index = this.chapters.findIndex(chapter => chapter.id === chapterId)
+
+      if (index > 0)
+        return this.chapters[index - 1].id
+
+      return null;
+    },
+    nextChapter() {
+      if (this.chapters.length <= 0)
+        return null;
+
+      const chapterId = this.data.chapterId;
+
+      const index = this.chapters.findIndex(chapter => chapter.id === chapterId)
+
+      if (index <= this.chapters.length)
+        return this.chapters[index + 1].id
+
+      return null;
+    }
+  },
   methods: {
+    changePage(event) {
+      const maxWidthPage = event.srcElement.width
+      const currentPositionX = event.offsetX;
+
+      if (currentPositionX > (maxWidthPage / 2))
+        this.nextPage();
+      else
+        this.previousPage();
+    },
+    previousPage() {
+      if (this.indexPage > 0)
+      {
+        this.indexPage -= 1;
+        this.setScrollTop();
+      }
+    },
+    nextPage() {
+      if (this.indexPage < (this.data.chapterPath.length - 1))
+      {
+        this.indexPage += 1;
+        this.setScrollTop();
+      }
+    },
+    setScrollTop(){
+      const scroll = document.getElementsByClassName('contain-page')[0];
+      scroll.scrollTop = 0;
+    },
+    fullScreen() {
+      const elem = document.getElementById('my-manga');
+      try {
+        elem.requestFullscreen();
+      } catch {
+        this.modeMobile = true;
+        elem.classList.add('fullscreen-mobile');
+      }
+    },
     sendMessage(setAction, data) {
       console.log(this.ws);
       this.ws.send(JSON.stringify({action: setAction, data}))
@@ -233,10 +386,15 @@ export default {
     load() {
       if (this.type === "anime" && this.$route.query.episode != null && this.data == null) {
         this.episode = this.$route.query.episode;
-      } else if (this.type === "manga" && this.data == null) {
+      } else if (this.type === "manga") {
         axios.get(`/api/manga/register?id=${this.$route.query.chapter}`)
             .then(rs => {
+              this.indexPage = 0;
               this.data = rs.data
+            });
+        axios.get(`/api/manga/chapter?name=${this.$route.query.manga}`)
+            .then(rs => {
+              this.chapters = rs.data
             });
       }
     },
@@ -253,19 +411,17 @@ export default {
         url = url.replace(/\\/g, '\\\\');
       }
 
-      console.log(url);
-      console.log(this.basePath);
-
       url = url.replace(this.basePath, '')
-
-      console.log(url);
-      console.log(`${this.hostHTTP}/${url}`);
 
       return `${this.hostHTTP}/${url}`;
     },
-    close(){
-      if(this.type === 'anime')
-      {
+    closeFullscreenMobile() {
+      const elem = document.getElementById('my-manga');
+      elem.classList.remove('fullscreen-mobile');
+      this.modeMobile = false;
+    },
+    close() {
+      if (this.type === 'anime') {
         this.ws.close();
         console.log('Closed WebSocket')
 
@@ -275,6 +431,9 @@ export default {
     }
   },
   watch: {
+    $route(to, from) {
+      this.load();
+    },
     episode() {
       this.getVideoEpisode(this.episode);
     },
@@ -284,8 +443,6 @@ export default {
     },
     pause() {
       var vid = document.getElementById("my-video");
-      console.log(vid)
-      console.log('CAMBIO STATO');
       if (this.pause === true) {
         vid.pause();
       } else if (this.pause === false) {
@@ -301,7 +458,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .link-share {
   background-color: white;
   padding: 10px;
@@ -312,9 +469,76 @@ export default {
   width: 100%;
   height: auto;
 }
-.img-page{
+
+.btn-page {
+  height: 200px;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  color: white !important;
+  padding: 5px;
+  cursor: pointer;
+}
+
+#my-manga {
+  width: calc(100vh - 316px);
+}
+
+.contain-page{
   width: 100%;
-  max-width: 800px;
-  height: auto;
+  height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.img-page {
+  cursor: pointer;
+  width: 100%;
+}
+#my-manga:not(:root):fullscreen {
+  .contain-page{
+    height: calc(100vh - 100px);
+
+    .img-page{
+      width: calc(100vh - 100px);
+    }
+  }
+}
+
+.btn-link{
+  font-style: unset;
+}
+
+  .currentPage {
+  font-size: large;
+  font-weight: bold;
+  color: white;
+}
+
+#my-manga.fullscreen-mobile {
+  width: 100%;
+  background-color: black;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  z-index: 1;
+
+  #closeFullscreenMobile {
+    background: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    padding: 10px;
+  }
+  .contain-page{
+    height: calc(100vh - 130px);
+
+    .img-page{
+      z-index: 1;
+    }
+  }
 }
 </style>
