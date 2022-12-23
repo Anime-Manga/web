@@ -60,11 +60,13 @@
                   </v-icon>
                 </div>
               </template>
-              <v-img
-                  :src="getUrl(data.chapterPath[indexPage])"
-                  class="img-page pa-1"
-                  @click="changePage"
-              />
+              <div class="contain-page">
+                <img
+                    :src="getUrl(data.chapterPath[indexPage])"
+                    class="img-page pa-1"
+                    @click="changePage"
+                />
+              </div>
             </template>
             <div
                 v-if="indexPage < (data.chapterPath.length - 1) && (!modeMobile)"
@@ -352,11 +354,21 @@ export default {
     },
     previousPage() {
       if (this.indexPage > 0)
+      {
         this.indexPage -= 1;
+        this.setScrollTop();
+      }
     },
     nextPage() {
       if (this.indexPage < (this.data.chapterPath.length - 1))
+      {
         this.indexPage += 1;
+        this.setScrollTop();
+      }
+    },
+    setScrollTop(){
+      const scroll = document.getElementsByClassName('contain-page')[0];
+      scroll.scrollTop = 0;
     },
     fullScreen() {
       const elem = document.getElementById('my-manga');
@@ -472,16 +484,28 @@ export default {
   width: calc(100vh - 316px);
 }
 
-.img-page {
-  cursor: pointer;
-  height: calc(100vh - 180px);
-}
-.btn-link{
-  font-style: unset;
+.contain-page{
+  width: 100%;
+  height: calc(100vh - 220px);
+  overflow-y: auto;
 }
 
-#my-manga:not(:root):fullscreen .img-page {
-  height: calc(100vh - 100px);
+.img-page {
+  cursor: pointer;
+  width: 100%;
+}
+#my-manga:not(:root):fullscreen {
+  .contain-page{
+    height: calc(100vh - 100px);
+
+    .img-page{
+      width: calc(100vh - 100px);
+    }
+  }
+}
+
+.btn-link{
+  font-style: unset;
 }
 
   .currentPage {
@@ -509,10 +533,12 @@ export default {
     z-index: 2;
     padding: 10px;
   }
+  .contain-page{
+    height: calc(100vh - 130px);
 
-  .img-page {
-    z-index: 1;
-    height: calc(100vh - 135px);
+    .img-page{
+      z-index: 1;
+    }
   }
 }
 </style>
