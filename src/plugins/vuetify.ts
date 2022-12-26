@@ -51,7 +51,9 @@ export default defineNuxtPlugin(nuxtApp => {
                 clapperboard:'fa-clapperboard',
                 user: 'fa-user',
                 crown: 'fa-crown',
-                share: 'fa-square-share-nodes'
+                share: 'fa-square-share-nodes',
+                arrowUp: 'fa-arrow-up',
+                arrowDown: 'fa-arrow-down'
             },
             sets: {
                 fa
