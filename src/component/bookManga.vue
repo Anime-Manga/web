@@ -71,6 +71,16 @@
           <div
               class="contain-page"
           >
+            <template v-if="modeMobile">
+              <div id="closeFullscreenMobile">
+                <v-icon
+                    @click="closeFullscreenMobile"
+                    color="white"
+                >
+                  $x
+                </v-icon>
+              </div>
+            </template>
             <img
                 ref="img-books"
                 class="img-page"
