@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Released]
+## [1.0.2] - 26-12-2022
+### Add
+- Read page or list
+
+### Changed
+- Controls for change chapters or set fullscreen
+
 ## [1.0.1] - 23-12-2022
 ### Added
 - change chapters while read manga
