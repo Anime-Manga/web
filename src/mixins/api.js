@@ -29,6 +29,21 @@ export default {
                     this.isLoading = false;
                 })
         },
+        searchDynamic(){
+            const {nameCfg, type} = this.store.getSchemasBySelectSearch;
+
+            axios(`/api/search-dynamic?name=${this.search}&nameCfg=${nameCfg}&type=${type}`)
+                .then(res => {
+                    const {data} = res;
+                    this.data = data;
+                })
+                .catch(err => {
+                    console.log(err)
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                })
+        },
         searchAnime() {
             axios(`/api/search-animesaturn?search=${this.search}`)
                 .then(res => {

@@ -13,7 +13,7 @@
           nav
         >
           <v-list-item
-            v-for="item in items"
+            v-for="item in getSchemas"
             :key="item.id"
             :value="item"
             @click="setTypeComponent(item.id)"
@@ -24,7 +24,7 @@
               <v-icon>{{item.icon}}</v-icon>
             </template>
 
-            <v-list-item-title v-text="item.text" />
+            <v-list-item-title v-text="item.text" class="text-capitalize" />
             <v-list-item-action
 
             />
@@ -39,6 +39,7 @@
 <script>
 import lodash from "../mixins/lodash";
 import {useStore} from "../store";
+import axios from "axios";
 export default {
   name: "index",
   mixins:[
@@ -51,32 +52,53 @@ export default {
   },
   data(){
     return{
-      items:[
-        {
+      select:[]
+    }
+  },
+  mounted() {
+    axios.get('api/schemas')
+        .then((rs) => {
+          const {data} = rs;
+          this.store.setSchemas(data)
+        })
+  },
+  computed:{
+    getSchemas(){
+      const items = [{
           id:'all',
           text:'All local DB',
           icon:'$database'
         },
         {
-          id:'search-local',
+          id:'local',
           text:'Search local DB',
           icon:'$search'
-        },
-        {
-          id:'search-animesaturn',
-          text:'Search on AnimeSaturn',
-          icon:'$planet'
-        },
-        {
-          id:'search-mangaworld',
-          text:'Search on MangaWorld',
-          icon:'$book'
-        },
-      ],
-      select:[]
+        }]
+
+      let schemas = this.store.getSchemas;
+
+      for (const key in schemas) {
+        items.push({
+          'id':`search-${schemas[key].name}`,
+          text:`Search ${schemas[key].name}`,
+          icon:this.getIcon(schemas[key].name)
+        })
+      }
+
+      return items;
     }
   },
   methods:{
+    getIcon(id){
+      switch (id){
+        case 'animesaturn':
+          return '$planet';
+        case 'mangaworld':
+          return '$book';
+        default:
+          return '';
+      }
+    },
     setTypeComponent(id){
       this.store.setCurrentSelectSearch(id);
     }

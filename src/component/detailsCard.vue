@@ -89,7 +89,7 @@
       </v-card-item>
       <v-card-title class="px-0">
         <v-img
-            :src="getImage"
+            :src="item.image ?? item.cover"
             class="card-img-top rounded-top hide-img"
             height="100"
             cover
@@ -100,12 +100,7 @@
         </div>
       </v-card-title>
       <v-card-text>
-        <descriptionAnime
-            v-if="type === 'anime'"
-            :item="item"
-        />
-        <descriptionManga
-            v-if="type === 'manga'"
+        <descriptionDynamic
             :item="item"
         />
         <statusDownload
@@ -119,23 +114,25 @@
 
 <script>
 import axios from "axios";
-import {Buffer} from "buffer";
 import _ from 'lodash'
 
-import descriptionAnime from "./descriptionAnime";
+import descriptionDynamic from "./descriptionDynamic";
 import statusDownload from "./statusDownload";
-import descriptionManga from "./descriptionManga";
 import alert from "./alert";
 
 import lodash from '/mixins/lodash'
+import {useStore} from "../store";
 
 export default {
   name: "detailsCard",
   components: {
-    descriptionAnime,
-    descriptionManga,
+    descriptionDynamic,
     statusDownload,
     alert
+  },
+  setup() {
+    const store = useStore();
+    return {store}
   },
   emits:[
     'closeDialogAndUpdate',
@@ -158,32 +155,19 @@ export default {
     }
   },
   mounted() {
-    if (!_.isNil(this.item.episodeTotal) || (!_.isNil(this.item.typeView) && this.item.typeView === 'anime'))
+    if (this.item.typeView === 'video' || this.item.type === 'video')
       this.type = 'anime';
     else
       this.type = 'manga';
   },
-  computed: {
-    getImage() {
-      if (_.isNil(this.item.urlPageDownload))
-        return 'data:image/jpg;base64,' + this.ConvertBase64(this.item.image);
-
-      return this.item.image;
-    }
-  },
   methods: {
-    ConvertBase64(imgBase64) {
-      if (imgBase64 == null)
-        return null
-
-      let buff = Buffer.from(imgBase64);
-      return buff.toString()
-    },
     download(){
       this.isLoadingDownload = true;
       this.error = null;
 
-      axios.post(`/api/${this.type}/download?url=${this.item.urlPageDownload}`)
+      const {nameCfg} = this.store.getSchemasBySelectSearch;
+
+      axios.post(`/api/${this.type}/download?url=${this.item.urlPageDownload}&nameCfg=${nameCfg}`)
           .then((res) => {
             const {data} = res;
             this.$emit('updateData', data);
@@ -197,27 +181,18 @@ export default {
       this.isLoadingReDownload = true;
       this.error = null;
 
-      axios(`/api/${this.type}/${this.type === 'anime'? 'episode' : 'chapter'}?name=${this.item.name}`)
-          .then(res => {
-            const {data} = res;
-
-            axios.put(`/api/${this.type}/redownload`, {media: data})
-                .catch((err) => {
-                  console.log(err)
-                  this.error = `Impossible send request for re-download this ${this.type}`
-                })
-                .finally(() => {
-                  this.isLoadingReDownload = false;
-                })
-          })
-          .catch(err => {
+      axios.put(`/api/${this.type}/redownload?name=${this.item.name_id}`)
+          .catch((err) => {
             console.log(err)
-            this.error = true;
+            this.error = `Impossible send request for re-download this ${this.type}`
+          })
+          .finally(() => {
+            this.isLoadingReDownload = false;
           })
     },
     remove(){
       this.isLoadingDelete = true;
-      axios.delete(`/api/${this.type}/delete?name=${this.item.name}`)
+      axios.delete(`/api/${this.type}/delete?name=${this.item.name_id}&nameCfg=${this.item.nameCfg}`)
           .then(res => {
             this.closeAndUpdate();
           })

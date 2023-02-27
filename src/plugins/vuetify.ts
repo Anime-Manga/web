@@ -53,7 +53,8 @@ export default defineNuxtPlugin(nuxtApp => {
                 crown: 'fa-crown',
                 share: 'fa-square-share-nodes',
                 arrowUp: 'fa-arrow-up',
-                arrowDown: 'fa-arrow-down'
+                arrowDown: 'fa-arrow-down',
+                video: 'fa-film'
             },
             sets: {
                 fa

@@ -3,14 +3,24 @@
       width="18rem"
       class="mr-2 ml-1 my-2"
   >
+    <div
+      class="identity-type"
+    >
+      <template v-if="item.typeView === 'video' || item.type === 'video'">
+        <v-icon>$video</v-icon>
+      </template>
+      <template v-else>
+        <v-icon>$book</v-icon>
+      </template>
+    </div>
     <v-img
-        :src="!item.urlPageDownload? 'data:image/jpg;base64,'+ConvertBase64(item.image) : item.image"
+        :src="item.image ?? item.cover"
         class="card-img-top rounded-top"
         height="400"
         cover
     />
     <v-card-title>
-      {{ item.name }}
+      {{ item.name ?? item.name_id }}
     </v-card-title>
     <v-card-actions>
       <v-btn
@@ -41,6 +51,7 @@ import _ from 'lodash'
 import api from '/mixins/api'
 import lodash from '/mixins/lodash'
 import axios from "axios";
+import {useStore} from "../store";
 
 export default {
   name: "previewCard",
@@ -54,6 +65,10 @@ export default {
     api,
     lodash
   ],
+  setup() {
+    const store = useStore();
+    return {store}
+  },
   data() {
     return {
       activeModal: null,
@@ -79,12 +94,14 @@ export default {
     details() {
       if (!_.isNil(this.item.exists) && this.item.exists === true) {
         let type = null;
-        if (this.item.typeView === 'anime')
+        if (this.item.typeView === 'video')
           type = 'anime'
         else
           type = 'manga'
 
-        axios(`/api/${type}/get?search=${this.item.name}`)
+        const {nameCfg} = this.store.getSchemasBySelectSearch
+
+        axios(`/api/${type}/get?name=${this.item.name}&nameCfg=${nameCfg}`)
             .then(res => {
               const {data} = res
               this.data = data;
@@ -104,3 +121,17 @@ export default {
   }
 }
 </script>
+<style lang="scss" scoped>
+.identity-type{
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  right: 0;
+  top: 0;
+  background-color: white;
+  width: 50px;
+  height: 50px;
+  z-index: 1;
+}
+</style >

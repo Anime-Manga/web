@@ -48,7 +48,7 @@
                 v-model="page"
                 class="my-4"
                 color="white"
-                :length="pages.length + 1"
+                :length="pages.length"
                 prev-icon="arrow-left"
                 next-icon="arrow-right"
             />
@@ -127,7 +127,7 @@ export default {
       switch (this.getCurrentSelectSearch) {
         case null:
         case 'all':
-        case "search-local":
+        case "local":
           return "/images/bar-anime.jpg";
         case "search-animesaturn":
           return "/images/logo_animesaturn.png";
@@ -139,7 +139,7 @@ export default {
       switch (this.getCurrentSelectSearch) {
         case null:
         case 'all':
-        case "search-local":
+        case "local":
           return "width: 100%;";
         case "search-animesaturn":
           return "width: 25%;";
@@ -175,15 +175,11 @@ export default {
         case 'all':
           this.getAll();
           break;
-        case "search-local":
+        case "local":
           this.searchLocal();
           break;
-        case "search-animesaturn":
-          this.searchAnime();
-          break;
-        case "search-mangaworld":
-          this.searchManga();
-          break;
+        default:
+          this.searchDynamic();
       }
     }
   }

@@ -70,7 +70,7 @@
             </template>
               <template v-else>
                 <div class="my-3">
-                  <NuxtLink :to="`/room?type=manga&chapter=${media.id}&manga=${item.name}`">
+                  <NuxtLink :to="`/room?type=manga&chapter=${media.id}&manga=${item.name_id}`">
                     <v-btn
                         color="primary"
                         block
@@ -132,7 +132,7 @@ export default {
         setTimeout(() => {
           if(_.isNil(this.item.urlPageDownload))
           {
-            axios(`/api/${this.type}/${this.type === 'anime'? 'episode' : 'chapter'}?name=${this.item.name}`, {timeout: this.TIMEOUT})
+            axios(`/api/${this.type}/${this.type === 'anime'? 'episode' : 'chapter'}?name=${this.item.name_id}`, {timeout: this.TIMEOUT})
                 .then(res => {
                   const {data} = res;
                   this.episodes = data;
