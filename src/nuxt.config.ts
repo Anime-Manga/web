@@ -2,7 +2,8 @@
 export default defineNuxtConfig({
     modules: [
         'nuxt-icons',
-        '@pinia/nuxt'
+        '@pinia/nuxt',
+        '@nuxt/devtools'
     ],
     css: [
         'vuetify/lib/styles/main.sass',

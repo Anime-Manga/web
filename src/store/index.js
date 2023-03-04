@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import {get, has} from "lodash";
+import _  from "lodash";
 
 export const useStore = defineStore('store', {
     state: () => ({
@@ -29,8 +29,8 @@ export const useStore = defineStore('store', {
 
             for (const index in state.schemas) {
 
-                let name = get(state.schemas[index], 'name');
-                let type = get(state.schemas[index], 'type');
+                let name = _.get(state.schemas[index], 'name');
+                let type = _.get(state.schemas[index], 'type');
                 if(name === key)
                 {
                     return {
