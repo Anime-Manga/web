@@ -1,13 +1,10 @@
-import axios from "axios";
-
 export default {
     methods:{
         getAll() {
             this.isLoading = true;
-            axios('/api/all')
-                .then(res => {
-                    const {data} = res;
-                    this.data = data;
+            fetch('/api/all', {method: 'get'})
+                .then(async rs => {
+                    this.data = await rs.json();
                 })
                 .catch(err => {
                     console.log(err)
@@ -17,10 +14,9 @@ export default {
                 })
         },
         searchLocal() {
-            axios(`/api/search-local?search=${this.search}`)
-                .then(res => {
-                    const {data} = res;
-                    this.data = data;
+            fetch(`/api/search-local?search=${this.search}`, {method: 'get'})
+                .then(async rs => {
+                    this.data = await rs.json();
                 })
                 .catch(err => {
                     console.log(err)
@@ -32,10 +28,9 @@ export default {
         searchDynamic(){
             const {nameCfg, type} = this.store.getSchemasBySelectSearch;
 
-            axios(`/api/search-dynamic?name=${this.search}&nameCfg=${nameCfg}&type=${type}`)
-                .then(res => {
-                    const {data} = res;
-                    this.data = data;
+            fetch(`/api/search-dynamic?name=${this.search}&nameCfg=${nameCfg}&type=${type}`, {method: 'get'})
+                .then(async rs => {
+                    this.data = await rs.json();
                 })
                 .catch(err => {
                     console.log(err)

@@ -20,7 +20,7 @@
           </v-icon>
         </v-btn>
         <template
-            v-if="!checkNull(this.item.urlPageDownload)"
+            v-if="!isNil(this.item.urlPageDownload)"
         >
           <v-btn
               color="warning"
@@ -104,113 +104,90 @@
             :item="item"
         />
         <statusDownload
-            :type="type"
             :item="item"
         />
       </v-card-text>
     </v-card>
   </v-dialog>
 </template>
-
-<script>
-import axios from "axios";
-import _ from 'lodash'
-
-import descriptionDynamic from "./descriptionDynamic";
-import statusDownload from "./statusDownload";
-import alert from "./alert";
-
-import lodash from '/mixins/lodash'
+<script setup>
 import {useStore} from "../store";
+const {isNil} = useLodash();
+//store
+const store = useStore();
 
-export default {
-  name: "detailsCard",
-  components: {
-    descriptionDynamic,
-    statusDownload,
-    alert
-  },
-  setup() {
-    const store = useStore();
-    return {store}
-  },
-  emits:[
-    'closeDialogAndUpdate',
-    'updateData'
-  ],
-  props: [
-    'item'
-  ],
-  mixins: [
-    lodash
-  ],
-  data() {
-    return {
-      activator: true,
-      type: '',
-      isLoadingDownload:false,
-      isLoadingReDownload: false,
-      isLoadingDelete:false,
-      error:null
-    }
-  },
-  mounted() {
-    if (this.item.typeView === 'video' || this.item.type === 'video')
-      this.type = 'anime';
-    else
-      this.type = 'manga';
-  },
-  methods: {
-    download(){
-      this.isLoadingDownload = true;
-      this.error = null;
+//api
+const {downloadContent, reDownloadContent, removeContent} = useApi();
 
-      const {nameCfg} = this.store.getSchemasBySelectSearch;
+const emit = defineEmits(['closeDialog','closeDialogAndUpdate','updateData']);
 
-      axios.post(`/api/${this.type}/download?url=${this.item.urlPageDownload}&nameCfg=${nameCfg}`)
-          .then((res) => {
-            const {data} = res;
-            this.$emit('updateData', data);
-          })
-          .catch(() => {
-            this.isLoadingDownload = false;
-            this.error = `Impossible send request for download this ${this.type}`
-          })
-    },
-    reDownload(){
-      this.isLoadingReDownload = true;
-      this.error = null;
-
-      axios.put(`/api/${this.type}/redownload?name=${this.item.name_id}`)
-          .catch((err) => {
-            console.log(err)
-            this.error = `Impossible send request for re-download this ${this.type}`
-          })
-          .finally(() => {
-            this.isLoadingReDownload = false;
-          })
-    },
-    remove(){
-      this.isLoadingDelete = true;
-      axios.delete(`/api/${this.type}/delete?name=${this.item.name_id}&nameCfg=${this.item.nameCfg}`)
-          .then(res => {
-            this.closeAndUpdate();
-          })
-        .catch((err) => {
-          console.log(err)
-          this.error = `Impossible send request for re-download this ${this.type}`
-        })
-        .finally(() => {
-          this.isLoadingDelete = false;
-        })
-    },
-    closeAndUpdate(){
-      this.$emit('closeDialogAndUpdate');
-    },
-    close(){
-      this.$emit('closeDialog');
-    }
+const props = defineProps({
+  item:{
+    type: Object,
+    required: true
   }
+})
+
+const {item} = toRefs(props);
+
+//variables
+const activator = ref(true);
+const isLoadingDownload = ref(false);
+const isLoadingReDownload = ref(false);
+const isLoadingDelete = ref(false);
+const error = ref(null);
+
+async function download(){
+  isLoadingDownload.value = true;
+
+  try{
+    let schema = store.getSchemasBySelectSearch;
+
+    console.log(item);
+    let data = await downloadContent(item.value.type, item.value.urlPageDownload, schema.nameCfg);
+    emit('updateData', data);
+  }catch(err){
+    console.log(err);
+    error.value = `Impossible send request for download this ${item.value.urlPageDownload}`;
+  }finally{
+    isLoadingDownload.value = false;
+  }
+}
+
+async function reDownload(){
+  isLoadingReDownload.value = true;
+  error.value = null;
+
+  try{
+    await reDownloadContent(item.value.type, item.value.name_id);
+  }catch{
+    error.value = `Impossible send request for re-download this ${item.value.urlPageDownload}`;
+  }finally{
+    isLoadingReDownload.value = false;
+  }
+}
+
+async function remove(){
+  isLoadingDelete.value = true;
+  error.value = null;
+
+  try{
+    await removeContent(item.value.type, item.value.name_id, item.value.nameCfg);
+    closeAndUpdate();
+  }catch(err){
+    console.log(err);
+    error.value = `Impossible send request for remove this ${item.value.urlPageDownload}`;
+  }finally{
+    isLoadingDelete.value = false;
+  }
+}
+
+function closeAndUpdate(){
+  emit('closeDialogAndUpdate');
+}
+
+function close(){
+  emit('closeDialog');
 }
 </script>
 

@@ -36,74 +36,60 @@
     </v-main>
   </v-app>
 </template>
-<script>
-import lodash from "../mixins/lodash";
+<script setup>
 import {useStore} from "../store";
-import axios from "axios";
-export default {
-  name: "index",
-  mixins:[
-    lodash
-  ],
-  setup(){
-    const store = useStore();
 
-    return {store}
-  },
-  data(){
-    return{
-      select:[]
-    }
-  },
-  mounted() {
-    axios.get('api/schemas')
-        .then((rs) => {
-          const {data} = rs;
-          this.store.setSchemas(data)
-        })
-  },
-  computed:{
-    getSchemas(){
-      const items = [{
-          id:'all',
-          text:'All local DB',
-          icon:'$database'
-        },
-        {
-          id:'local',
-          text:'Search local DB',
-          icon:'$search'
-        }]
+//variables
+const select = ref();
 
-      let schemas = this.store.getSchemas;
+//store
+const store = useStore();
 
-      for (const key in schemas) {
-        items.push({
-          'id':`search-${schemas[key].name}`,
-          text:`Search ${schemas[key].name}`,
-          icon:this.getIcon(schemas[key].name)
-        })
-      }
+//api
+const {getCfg} = useApi();
 
-      return items;
-    }
-  },
-  methods:{
-    getIcon(id){
-      switch (id){
-        case 'animesaturn':
-          return '$planet';
-        case 'mangaworld':
-          return '$book';
-        default:
-          return '';
-      }
-    },
-    setTypeComponent(id){
-      this.store.setCurrentSelectSearch(id);
-    }
+const result = await getCfg();
+store.setSchemas(result);
+
+function getIcon(id){
+  switch (id){
+    case 'animesaturn':
+      return '$planet';
+    case 'mangaworld':
+      return '$book';
+    default:
+      return '';
   }
 }
+
+function setTypeComponent(id){
+  store.setCurrentSelectSearch(id);
+}
+
+const getSchemas = computed(() => {
+  const items = [{
+    id:'all',
+    text:'All local DB',
+    icon:'$database'
+  },
+    {
+      id:'local',
+      text:'Search local DB',
+      icon:'$search'
+    }]
+
+  let schemas = store.getSchemas;
+
+  for (const key in schemas) {
+    items.push({
+      'id':`search-${schemas[key].name}`,
+      text:`Search ${schemas[key].name}`,
+      icon: getIcon(schemas[key].name)
+    })
+  }
+
+  return items;
+})
 </script>
 
 <style lang="scss" scoped>
@@ -111,6 +97,7 @@ export default {
   color: white !important;
 }
 </style>
+
 <style>
 #main {
   background-image: url("/images/background.jpg");

@@ -8,11 +8,7 @@
 </template>
 
 <script>
-import searchComponent from "../component/searchComponent";
 export default {
-  name: "index",
-  components:{
-    searchComponent
-  },
+  name: "index"
 }
 </script>

@@ -24,11 +24,7 @@
     </v-card-actions>
   </v-card>
 </template>
-<script>
-export default {
-  name: 'previewCardLoading'
-}
-</script>
+
 <style lang="scss" scoped>
 @keyframes placeHolderShimmer {
   0% {

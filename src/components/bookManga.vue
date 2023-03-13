@@ -178,7 +178,6 @@
 <script>
 import lodash from "../mixins/lodash";
 
-import axios from "axios";
 import {useRuntimeConfig} from "nuxt/app";
 import _ from 'lodash'
 
@@ -333,14 +332,14 @@ export default {
       this.modeMobile = false;
     },
     load() {
-      axios.get(`/api/manga/register?id=${this.$route.query.chapter}`)
-          .then(rs => {
+      fetch(`/api/manga/register?id=${this.$route.query.chapter}`, {method: 'get'})
+          .then(async rs => {
             this.indexPage = 0;
-            this.data = rs.data
+            this.data = await rs.json()
           });
-      axios.get(`/api/manga/chapter?name=${this.$route.query.manga}`)
-          .then(rs => {
-            this.chapters = rs.data
+      fetch(`/api/manga/chapter?name=${this.$route.query.manga}`, {method: 'get'})
+          .then(async rs => {
+            this.chapters = await rs.json()
           });
     },
     close() {

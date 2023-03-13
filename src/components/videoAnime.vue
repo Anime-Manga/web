@@ -41,7 +41,6 @@
 <script>
 import {useRuntimeConfig} from "nuxt/app";
 import mitt from "mitt";
-import axios from "axios";
 
 import lodash from "../mixins/lodash";
 
@@ -227,9 +226,9 @@ export default {
     },
     getVideoEpisode() {
       //get api internal
-      axios.get(`/api/anime/register?id=${this.episode}`)
-          .then(rs => {
-            this.data = rs.data
+      fetch(`/api/anime/register?id=${this.episode}`, {method: 'get'})
+          .then(async rs => {
+            this.data = await rs.json()
           });
     },
     close() {
