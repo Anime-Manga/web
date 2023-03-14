@@ -13,20 +13,10 @@
   </div>
 </template>
 
-<script>
-import videoAnime from "../../component/videoAnime";
-import bookManga from "../../component/bookManga";
+<script setup>
+const route = useRoute();
 
-export default {
-  name: 'room',
-  components: {
-    videoAnime,
-    bookManga
-  },
-  computed: {
-    getType(){
-      return this.$route.query.type;
-    }
-  }
-}
+const getType = computed(() => {
+  return route.query.type;
+});
 </script>

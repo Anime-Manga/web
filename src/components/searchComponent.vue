@@ -99,8 +99,7 @@ const getCurrentSelectSearch = computed(() => {
 
   switch (type) {
     case 'all':
-      getAll()
-      .then(rs => {
+      getAll().then(rs => {
         data.value = rs;
       })
   }

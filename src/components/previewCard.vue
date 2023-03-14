@@ -87,7 +87,7 @@ async function details() {
   if (!_.isNil(item.value.exists) && item.value.exists === true) {
     const {nameCfg} = store.getSchemasBySelectSearch
 
-    data.value = getByName(item.value.typeView, item.value.name, nameCfg)
+    data.value = await getByName(item.value.typeView, item.value.name, nameCfg)
     activeModal.value = 'detailsCard'
   } else
     activeModal.value = 'detailsCard'

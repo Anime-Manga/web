@@ -42,7 +42,7 @@
             <div class="contain-page text-center">
               <img
                   v-show="data && loadingImage === false"
-                  ref="img-book"
+                  ref="imgBook"
                   :src="getUrl()"
                   class="img-page pa-1"
                   @click="changePage"
@@ -82,7 +82,7 @@
               </div>
             </template>
             <img
-                ref="img-books"
+                ref="imgBooks"
                 class="img-page"
                 v-show="!loadingImage"
                 v-for="index in (data.chapterPath.length)"
@@ -119,14 +119,14 @@
                 v-if="data"
                 class="currentPage"
             >
-              <span class="d-block">{{ $route.query.chapter }}</span>
+              <span class="d-block">{{ route.query.chapter }}</span>
               <span class="d-block">{{ indexPage + 1 }}/{{ data.chapterPath.length }}</span>
             </div>
           </div>
           <div class="d-flex flex-row justify-space-around flex-wrap mb-2">
             <NuxtLink
                 v-if="getPreviousChapter"
-                :to="`/room?type=manga&chapter=${getPreviousChapter}&manga=${$route.query.manga}`"
+                :to="`/room?type=manga&chapter=${getPreviousChapter}&manga=${route.query.manga}`"
                 class="text-decoration-none"
             >
               <v-btn
@@ -143,7 +143,7 @@
             <div v-else></div>
             <NuxtLink
                 v-if="nextChapter"
-                :to="`/room?type=manga&chapter=${nextChapter}&manga=${$route.query.manga}`"
+                :to="`/room?type=manga&chapter=${nextChapter}&manga=${route.query.manga}`"
                 class="text-decoration-none"
             >
               <v-btn
@@ -175,177 +175,182 @@
   </div>
 </template>
 
-<script>
-import lodash from "../mixins/lodash";
-
-import {useRuntimeConfig} from "nuxt/app";
+<script setup>
 import _ from 'lodash'
 
-import cacheImg from "./cacheImg";
+const runtimeConfig = useRuntimeConfig();
+const route = useRoute();
+const router = useRouter();
+const {getRegister, getStatus} = useApi();
 
-export default {
-  name: "bookManga",
-  components: {
-    cacheImg
-  },
-  mixins: [
-    lodash
-  ],
-  data() {
-    const runtimeConfig = useRuntimeConfig();
+//env
+const data = ref(null)
+const indexPage = ref(0)
+const chapters = ref([])
+const modeMobile = ref(false)
+const loadingImage = ref(true)
+const showMenu = ref(false)
+const modeList = ref(false)
+const done = ref(0)
 
-    return {
-      hostHTTP: runtimeConfig.public.httpBase,
-      basePath: runtimeConfig.public.basePath,
+//refs
+const imgBook = ref(null);
+const imgBooks = ref(null);
 
-      data: null,
-      indexPage: 0,
-      chapters: [],
-      modeMobile: false,
-      loadingImage: true,
-      showMenu: false,
-      modeList: false,
-      done: 0
+//services
+const hostHTTP = ref(runtimeConfig.public.httpBase);
+const basePath = ref(runtimeConfig.public.basePath);
+
+
+onMounted(() => {
+  load();
+  checkDownload();
+})
+
+onUpdated(() => {
+  if (data.value.chapterId !== route.query.chapter) {
+      done.value = 0;
+      loadingImage.value = true;
+      load();
     }
-  },
-  mounted() {
-    this.load();
-    this.checkDownload();
-  },
-  updated() {
-    if (this.data.chapterId !== this.$route.query.chapter) {
-      this.done = 0;
-      this.loadingImage = true;
-      this.load();
+}) 
+
+//computed
+const getPreviousChapter = computed(() => {
+  if (chapters.value.length <= 0)
+    return null;
+
+  const chapterId = data.value.chapterId;
+
+  const index = chapters.value.findIndex(chapter => chapter.id === chapterId)
+
+  if (index > 0)
+    return chapters.value[index - 1].id
+  return null;
+})
+
+const nextChapter = computed(() => {
+  if (chapters.value.length <= 0)
+    return null;
+
+  const chapterId = data.value.chapterId;
+
+  const index = chapters.value.findIndex(chapter => chapter.id === chapterId)
+
+  if (index <= chapters.value.length)
+    return chapters.value[index + 1].id
+  return null;
+});
+//watch
+watch(done, () => {
+  if (done.value === (data.value.chapterPath.length - 1))
+    loadingImage.value = false;
+})
+
+watch(data, () => {
+  checkDownload();
+})
+
+//functions
+function checkDownload() {
+  console.log(imgBook.value);
+  if (!_.isNil(imgBook.value)) {
+    imgBook.value.onload = function () {
+      loadingImage.value = false;
     }
-  },
-  watch: {
-    done() {
-      if (this.done === (this.data.chapterPath.length - 1))
-        this.loadingImage = false;
-    },
-    data() {
-      this.checkDownload();
-    }
-  },
-  computed: {
-    getPreviousChapter() {
-      if (this.chapters.length <= 0)
-        return null;
-
-      const chapterId = this.data.chapterId;
-
-      const index = this.chapters.findIndex(chapter => chapter.id === chapterId)
-
-      if (index > 0)
-        return this.chapters[index - 1].id
-
-      return null;
-    },
-    nextChapter() {
-      if (this.chapters.length <= 0)
-        return null;
-
-      const chapterId = this.data.chapterId;
-
-      const index = this.chapters.findIndex(chapter => chapter.id === chapterId)
-
-      if (index <= this.chapters.length)
-        return this.chapters[index + 1].id
-
-      return null;
-    }
-  },
-  methods: {
-    checkDownload() {
-      const _self = this
-
-      if (!_.isNil(this.$refs["img-book"])) {
-        this.$refs["img-book"].onload = function () {
-          _self.loadingImage = false;
-        }
-      } else if (this.$refs["img-books"]) {
-        for (const img of this.$refs["img-books"]) {
-          img.onload = function () {
-            _self.done += 1;
-          }
-        }
+  } else if (!_.isNil(imgBooks.value)) {
+    for (const img of imgBooks.value) {
+      img.onload = function () {
+        done.value += 1;
       }
-    },
-    changePage(event) {
-      const maxWidthPage = event.srcElement.width
-      const currentPositionX = event.offsetX;
-
-      if (currentPositionX > (maxWidthPage / 2))
-        this.nextPage();
-      else
-        this.previousPage();
-    },
-    previousPage() {
-      if (this.indexPage > 0) {
-        this.loadingImage = true;
-        this.checkDownload();
-        this.indexPage -= 1;
-        this.setScrollTop();
-      }
-    },
-    nextPage() {
-      if (this.indexPage < (this.data.chapterPath.length - 1)) {
-        this.loadingImage = true;
-        this.checkDownload();
-        this.indexPage += 1;
-        this.setScrollTop();
-      }
-    },
-    setScrollTop() {
-      const scroll = document.getElementsByClassName('contain-page')[0];
-      scroll.scrollTop = 0;
-    },
-    fullScreen() {
-      const elem = document.getElementById('my-manga');
-      try {
-        elem.requestFullscreen();
-      } catch {
-        this.modeMobile = true;
-        elem.classList.add('fullscreen-mobile');
-      }
-    },
-    getUrl(index = this.indexPage) {
-      let url;
-
-      if (!_.isNil(this.data))
-        url = this.data.chapterPath[index];
-      else
-        return null;
-
-      if (url.includes(':')) {
-        url = url.replace(/\\/g, '\\\\');
-      }
-
-      url = url.replace(this.basePath, '')
-
-      return `${this.hostHTTP}/${url}`;
-    },
-    closeFullscreenMobile() {
-      const elem = document.getElementById('my-manga');
-      elem.classList.remove('fullscreen-mobile');
-      this.modeMobile = false;
-    },
-    load() {
-      fetch(`/api/manga/register?id=${this.$route.query.chapter}`, {method: 'get'})
-          .then(async rs => {
-            this.indexPage = 0;
-            this.data = await rs.json()
-          });
-      fetch(`/api/manga/chapter?name=${this.$route.query.manga}`, {method: 'get'})
-          .then(async rs => {
-            this.chapters = await rs.json()
-          });
-    },
-    close() {
-      this.$router.push('/')
     }
   }
+}
+
+function changePage(event) {
+  const maxWidthPage = event.srcElement.width
+  const currentPositionX = event.offsetX;
+
+  if (currentPositionX > (maxWidthPage / 2))
+    nextPage();
+  else
+    previousPage();
+}
+
+function previousPage() {
+  if (indexPage.value > 0) {
+    loadingImage.value = true;
+    checkDownload();
+    indexPage.value -= 1;
+    setScrollTop();
+  }
+}
+function nextPage() {
+  if (indexPage.value < (data.value.chapterPath.length - 1)) {
+    loadingImage.value = true;
+    checkDownload();
+    indexPage.value += 1;
+    setScrollTop();
+  }
+}
+
+function setScrollTop() {
+  const scroll = document.getElementsByClassName('contain-page')[0];
+  scroll.scrollTop = 0;
+}
+
+function fullScreen() {
+  const elem = document.getElementById('my-manga');
+  try {
+    elem.requestFullscreen();
+  } catch {
+    modeMobile.value = true;
+    elem.classList.add('fullscreen-mobile');
+  }
+}
+
+function getUrl(index = indexPage.value) {
+  let url;
+  if (!_.isNil(data.value))
+    url = data.value.chapterPath[index];
+  else
+    return null;
+  if (url.includes(':')) {
+    url = url.replace(/\\/g, '\\\\');
+  }
+  url = url.replace(basePath.value, '')
+
+  if(url[0] === '/')
+    return `${hostHTTP.value}${url}`;
+
+  return `${hostHTTP.value}/${url}`;
+}
+
+function closeFullscreenMobile() {
+  const elem = document.getElementById('my-manga');
+  elem.classList.remove('fullscreen-mobile');
+  modeMobile.value = false;
+}
+
+async function load() {
+  try{
+    const result = await getRegister('book', route.query.chapter)
+    indexPage.value = 0;
+    data.value = result;
+  }catch(err){
+    console.log(err);
+  }
+
+  try{
+    const result = await getStatus('book', route.query.manga)
+    chapters.value = result;
+  }catch(err){
+    console.log(err);
+  }
+}
+
+function close() {
+  router.push('/')
 }
 </script>
 

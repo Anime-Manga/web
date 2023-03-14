@@ -3,6 +3,6 @@ import {defineEventHandler, getQuery} from "h3";
 const API_BASE = process.env.API_BASE_URL || 'http://localhost:5000';
 
 export default defineEventHandler(async (event) => {
-    const {id} = getQuery(event)
-    return await $fetch(`${API_BASE}/chapter/register/chapterid/${id}`, {method: 'get'});
+    const {name, nameCfg} = getQuery(event)
+    return await $fetch(`${API_BASE}/video/${name}?nameCfg=${nameCfg}`, {method: 'delete'});
 })

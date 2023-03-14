@@ -1,6 +1,4 @@
 export default function useApi(){
-    const runtimeConfig = useRuntimeConfig()
-    const API_BASE = runtimeConfig.public.apiBase;
     const TIMEOUT = 2000;
 
     function parse(value)
@@ -13,22 +11,22 @@ export default function useApi(){
 
     //generic
     async function getCfg(){
-        const result = await $fetch(`${API_BASE}/cfg`, {method: 'get', timeout: TIMEOUT});
+        const result = await $fetch(`/api/schemas`, {method: 'get', timeout: TIMEOUT});
         return parse(result);
     }
 
     async function getAll(){
-        const result = await $fetch(`${API_BASE}/all`, {method: 'get', timeout: TIMEOUT});
+        const result = await $fetch(`/api/all`, {method: 'get', timeout: TIMEOUT});
         return parse(result);
     }
 
     async function searchDynamic(type, name, nameCfg){
-        const result = await $fetch(`${API_BASE}/${type}/list/name/${name}?nameCfg=${nameCfg}`, {method: 'get', timeout: TIMEOUT});
+        const result = await $fetch(`/api/search-dynamic`, {query: {type, name, nameCfg}, method: 'get', timeout: TIMEOUT});
         return parse(result);
     }
 
     async function searchLocal(name){
-        const result = await $fetch(`${API_BASE}/search?name=${name}`, {method: 'get', timeout: TIMEOUT});
+        const result = await $fetch(`/api/search-local`, {query: {name}, method: 'get', timeout: TIMEOUT});
         return parse(result);
     }
     
@@ -36,9 +34,9 @@ export default function useApi(){
         let result;
 
         if(type === 'video')
-           result = await $fetch(`${API_BASE}/video/name/${name}?nameCfg=${nameCfg}`, {method: 'get', timeout: TIMEOUT});
+           result = await $fetch(`/api/anime/get`, {query:{name, nameCfg}, method: 'get', timeout: TIMEOUT});
         else
-            result = await $fetch(`${API_BASE}/book/name/${name}?nameCfg=${nameCfg}`, {method: 'get', timeout: TIMEOUT});
+            result = await $fetch(`/api/manga/get`, {query:{name, nameCfg}, method: 'get', timeout: TIMEOUT});
         return parse(result);
     }
 
@@ -49,9 +47,9 @@ export default function useApi(){
         }
 
         if(type === 'video')
-            result = await $fetch(`${API_BASE}/video/download`, {method: 'post', body: JSON.stringify(body), timeout: TIMEOUT});
+            result = await $fetch(`/api/anime/download`, {method: 'post', body: JSON.stringify(body), timeout: TIMEOUT});
         else
-            result = await $fetch(`${API_BASE}/book/download`, {method: 'post', body: JSON.stringify(body), timeout: TIMEOUT});
+            result = await $fetch(`/api/manga/download`, {method: 'post', body: JSON.stringify(body), timeout: TIMEOUT});
         return parse(result);
     }
 
@@ -59,9 +57,9 @@ export default function useApi(){
         let result;
 
         if(type === 'video')
-            result = await $fetch(`${API_BASE}/video/redownload?name=${name}`, {method: 'put', timeout: TIMEOUT});
+            result = await $fetch(`/api/anime/redownload`, {query:{name}, method: 'put', timeout: TIMEOUT});
         else
-            result = await $fetch(`${API_BASE}/book/redownload?name=${name}`, {method: 'put', timeout: TIMEOUT});
+            result = await $fetch(`/api/manga/redownload`, {query:{name}, method: 'put', timeout: TIMEOUT});
       return parse(result);
     }
 
@@ -69,9 +67,9 @@ export default function useApi(){
         let result;
 
         if(type === 'video')
-            result = await $fetch(`${API_BASE}/video/${name}?nameCfg=${nameCfg}`, {method: 'delete', timeout: TIMEOUT});
+            result = await $fetch(`/api/anime/delete`, {query:{name, nameCfg}, method: 'delete', timeout: TIMEOUT});
         else
-            result = await $fetch(`${API_BASE}/book/${name}?nameCfg=${nameCfg}`, {method: 'delete', timeout: TIMEOUT});
+            result = await $fetch(`/api/manga/delete`, {query:{name, nameCfg}, method: 'delete', timeout: TIMEOUT});
       return parse(result);
     }
 
@@ -79,11 +77,22 @@ export default function useApi(){
         let result;
 
         if(type === 'video')
-            result = await $fetch(`${API_BASE}/episode/name/${name}`, {method: 'get', timeout: TIMEOUT});
+            result = await $fetch(`/api/anime/episode`, {query:{name}, method: 'get', timeout: TIMEOUT});
         else
-            result = await $fetch(`${API_BASE}/chapter/name/${name}`, {method: 'get', timeout: TIMEOUT});
+            result = await $fetch(`/api/manga/chapter`, {query:{name}, method: 'get', timeout: TIMEOUT});
       return parse(result);
     }
+
+    async function getRegister(type, id){
+        let result;
+
+        if(type === 'video')
+            result = await $fetch(`/api/anime/register`, {query:{id},method: 'get', timeout: TIMEOUT});
+        else
+            result = await $fetch(`/api/manga/register`, {query:{id},method: 'get', timeout: TIMEOUT});
+      return parse(result);
+    }
+    
     return{
         getAll,
         getCfg,
@@ -93,6 +102,7 @@ export default function useApi(){
         downloadContent,
         reDownloadContent,
         removeContent,
-        getStatus
+        getStatus,
+        getRegister
     }
 }

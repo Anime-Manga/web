@@ -143,7 +143,6 @@ async function download(){
   try{
     let schema = store.getSchemasBySelectSearch;
 
-    console.log(item);
     let data = await downloadContent(item.value.type, item.value.urlPageDownload, schema.nameCfg);
     emit('updateData', data);
   }catch(err){
