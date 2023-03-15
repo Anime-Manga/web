@@ -20,7 +20,7 @@
     <div
         class="ma-2"
     >
-        <span v-if="!checkNull(idRoom)" class="link-share">
+        <span v-if="!isNil(idRoom)" class="link-share">
           <v-icon
               class="mr-3"
           >
@@ -38,207 +38,167 @@
   </div>
 </template>
 
-<script>
-import {useRuntimeConfig} from "nuxt/app";
+<script setup>
 import mitt from "mitt";
-
-import lodash from "../mixins/lodash";
-
 import pkg from 'websocket';
 const {w3cwebsocket} = pkg;
 
-import userSession from "./userSession";
-export default {
-  name: "videoAnime",
-  components:{
-    userSession
-  },
-  mixins:[
-    lodash
-  ],
-  data() {
-    const runtimeConfig = useRuntimeConfig();
+const runtimeConfig = useRuntimeConfig();
+const route = useRoute();
+const router = useRouter();
+const {getRegister} = useApi();
+const {isNil} = useLodash();
 
-    return {
-      hostSocket: runtimeConfig.public.socketBase,
-      hostHTTP: runtimeConfig.public.httpBase,
-      hostWeb: runtimeConfig.public.webBase,
-      basePath: runtimeConfig.public.basePath,
+const hostSocket = ref(runtimeConfig.public.socketBase);
+const hostHTTP = ref(runtimeConfig.public.httpBase);
+const hostWeb = ref(runtimeConfig.public.webBase);
+const basePath = ref(runtimeConfig.public.basePath);
+const hide = ref("");
+const data = ref(null);
+const ws = ref(null);
+const idRoom = ref(null);
+const root = ref(null);
+const currentUser = ref(null);
+const users = ref(null);
+const episode = ref(null);
+const pause = ref(null);
+const time = ref(0);
+const room = ref(null);
+const type = ref(null);
 
-      hide: "",
-      data: null,
+onMounted(() => {
+  room.value = mitt();
+  console.log("Starting connection to WebSocket Server");
 
-      ws: null,
+  ws.value = new w3cwebsocket(hostSocket.value);
 
-      idRoom: null,
-      root: null,
-      currentUser: null,
-      users: null,
-      episode: null,
-      pause: null,
-      time: 0,
-      room: null,
-      type: null
+  //sockets
+  ws.value.onopen = function () {
+    console.log("Successfully connected to the echo WebSocket Server");
+    console.log(ws.value)
+    room.value.emit('checkRoom');
+  };
+  ws.value.onmessage = function (event) {
+    console.log(event);
+    room.value.emit('socket-message', event);
+  }
+  room.value.on('socket-message', (event) => {
+    console.log("Un messaggio arrivato: ");
+    console.log(event.data)
+    var data = JSON.parse(event.data)
+    if (data.action === 'registration') {
+      root.value = data.nickname
+      episode.value = route.query.episode;
+      getVideoEpisode();
+
+    } else if (data.action === 'UpdateRoom') {
+      idRoom.value = data.room.id_room
+      users.value = data.room.clients
+      time.value = data.room.t
+      pause.value = data.room.pause
+    } else if (data.action === 'loadVideo') {
+      idRoom.value = data.id
+      root.value = data.nickname
+      episode.value = data.episode
+    } else if (data.action === 'currentTime') {
+      room.value.emit('currentTime')
     }
-  },
-  mounted() {
-    this.room = mitt();
-
-    console.log("Starting connection to WebSocket Server");
-    this.ws = new w3cwebsocket(this.hostSocket);
-
-    const _self = this;
-    //sockets
-    this.ws.onopen = function () {
-      console.log("Successfully connected to the echo WebSocket Server");
-      console.log(_self.ws)
-
-      _self.room.emit('checkRoom');
-    };
-
-    this.ws.onmessage = function (event) {
-      console.log(event);
-      _self.room.emit('socket-message', event);
-    }
-
-    this.room.on('socket-message', (event) => {
-      console.log("Un messaggio arrivato: ");
-      console.log(event.data)
-
-      var data = JSON.parse(event.data)
-      if (data.action === 'registration') {
-        this.root = data.nickname
-        this.episode = this.$route.query.episode;
-        this.getVideoEpisode()
-
-      } else if (data.action === 'UpdateRoom') {
-        this.idRoom = data.room.id_room
-        this.users = data.room.clients
-        this.time = data.room.t
-        this.pause = data.room.pause
-
-      } else if (data.action === 'loadVideo') {
-        this.idRoom = data.id
-        this.root = data.nickname
-        this.episode = data.episode
-
-      } else if (data.action === 'currentTime') {
-        this.room.emit('currentTime')
-      }
-    });
-
-    this.room.on('checkRoom', () => {
-      console.log('check')
-      console.log(_self.ws)
-
-      if (this.$route.query.idroom == null)
-        this.room.emit('createRoom');
-      else
-        this.room.emit('joinRoom');
-    });
-
-    this.room.on('createRoom', () => {
-      this.currentUser = new Date().getUTCMilliseconds().toString();
-
-      const data = {nickname: this.currentUser, episode: this.$route.query.episode};
-
-      this.ws.send(JSON.stringify({action: 'create', data}))
-      console.log('request registration');
-    });
-
-    this.room.on('joinRoom', () => {
-      this.currentUser = new Date().getUTCMilliseconds().toString();
-      this.sendMessage('join', {nickname: this.currentUser, idRoom: this.$route.query.idroom})
-      console.log('request join');
-    });
-
-    this.room.on('pause', (statePause) => {
-      this.sendMessage('updatePause', {pause: statePause, idRoom: this.idRoom})
-      console.log('request updatePause');
-    });
-
-    this.room.on('time', (stateTime) => {
-      this.sendMessage('updateTime', {time: stateTime, idRoom: this.idRoom})
-      console.log('request updatePause');
-    });
-
-    this.room.on('currentTime', () => {
-      let vid = document.getElementById("my-video");
-
-      this.sendMessage('currentTime', {time: vid.currentTime, idRoom: this.idRoom})
-      console.log('request currentTime');
-    });
-
-    //event
+  });
+  room.value.on('checkRoom', () => {
+    console.log('check')
+    console.log(ws.value)
+    if (route.query.idroom == null)
+      room.value.emit('createRoom');
+    else
+      room.value.emit('joinRoom');
+  });
+  room.value.on('createRoom', () => {
+    currentUser.value = new Date().getUTCMilliseconds().toString();
+    const data = {nickname: currentUser.value, episode: route.query.episode};
+    ws.value.send(JSON.stringify({action: 'create', data}))
+    console.log('request registration');
+  });
+  room.value.on('joinRoom', () => {
+    currentUser.value = new Date().getUTCMilliseconds().toString();
+    sendMessage('join', {nickname: currentUser.value, idRoom: route.query.idroom})
+    console.log('request join');
+  });
+  room.value.on('pause', (statePause) => {
+    sendMessage('updatePause', {pause: statePause, idRoom: idRoom.value})
+    console.log('request updatePause');
+  });
+  room.value.on('time', (stateTime) => {
+    sendMessage('updateTime', {time: stateTime, idRoom: idRoom.value})
+    console.log('request updatePause');
+  });
+  room.value.on('currentTime', () => {
     let vid = document.getElementById("my-video");
+    sendMessage('currentTime', {time: vid.currentTime, idRoom: idRoom.value})
+    console.log('request currentTime');
+  });
 
-    vid.addEventListener("canplaythrough", () => {
+  //event
+  let vid = document.getElementById("my-video");
+  vid.addEventListener("canplaythrough", () => {
+    console.log('canplaythrough');
+    let vid = document.getElementById("my-video");
+    if (vid.currentTime > 0)
+      room.value.emit('time', vid.currentTime);
+  });
+  vid.addEventListener("pause", () => {
+    room.value.emit('pause', true);
+  });
+  vid.addEventListener("playing", () => {
+    room.value.emit('pause', false);
+  });
+})
 
-      console.log('canplaythrough');
-      let vid = document.getElementById("my-video");
+watch(episode, () => {
+  getVideoEpisode(episode.value);
+});
 
-      if (vid.currentTime > 0)
-        _self.room.emit('time', vid.currentTime);
-    });
-    vid.addEventListener("pause", () => {
-      _self.room.emit('pause', true);
-    });
-    vid.addEventListener("playing", () => {
-      _self.room.emit('pause', false);
-    });
-  },
-  watch: {
-    episode() {
-      this.getVideoEpisode(this.episode);
-    },
-    time() {
-      var vid = document.getElementById("my-video");
-      vid.currentTime = this.time
-    },
-    pause() {
-      let vid = document.getElementById("my-video");
-      if (this.pause === true) {
-        vid.pause();
-      } else if (this.pause === false) {
-        try {
-          vid.play();
-        } catch {
-          vid.muted = true;
-          vid.play();
-        }
-      }
-    }
-  },
-  methods: {
-    sendMessage(setAction, data) {
-      console.log(this.ws);
-      this.ws.send(JSON.stringify({action: setAction, data}))
-    },
-    getUrl(url) {
+watch(time, () => {
+  var vid = document.getElementById("my-video");
+  vid.currentTime = time.value
+})
 
-      if (url.includes(':')) {
-        url = url.replace(/\\/g, '\\\\');
-      }
-
-      url = url.replace(this.basePath, '')
-
-      return `${this.hostHTTP}/${url}`;
-    },
-    getVideoEpisode() {
-      //get api internal
-      fetch(`/api/anime/register?id=${this.episode}`, {method: 'get'})
-          .then(async rs => {
-            this.data = await rs.json()
-          });
-    },
-    close() {
-      this.ws.close();
-      console.log('Closed WebSocket')
-
-      this.ws = null;
-      this.$router.push('/')
+watch(pause, () => {
+  let vid = document.getElementById("my-video");
+  if (pause.value === true) {
+    vid.pause();
+  } else if (pause.value === false) {
+    try {
+      vid.play();
+    } catch {
+      vid.muted = true;
+      vid.play();
     }
   }
+})
+
+function sendMessage(setAction, data) {
+  console.log(ws.value);
+  ws.value.send(JSON.stringify({action: setAction, data}))
+}
+
+function getUrl(url) {
+  if (url.includes(':')) {
+    url = url.replace(/\\/g, '\\\\');
+  }
+  url = url.replace(basePath.value, '')
+  return `${hostHTTP.value}/${url}`;
+}
+
+async function getVideoEpisode() {
+  //get api internal
+  data.value = await getRegister('video', episode.value);
+}
+
+function close() {
+  ws.value.close();
+  console.log('Closed WebSocket')
+  ws.value = null;
+  router.push('/')
 }
 </script>
 

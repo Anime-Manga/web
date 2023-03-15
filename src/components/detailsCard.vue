@@ -3,6 +3,7 @@
       v-model="activator"
       width="1000"
       persistent
+      scrollable
   >
     <v-card>
       <v-card-item
