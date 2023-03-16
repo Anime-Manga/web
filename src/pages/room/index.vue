@@ -14,6 +14,7 @@
 </template>
 
 <script setup>
+definePageMeta({ auth: false })
 const route = useRoute();
 
 const getType = computed(() => {

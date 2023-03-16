@@ -18,9 +18,6 @@ export const useStore = defineStore('store', {
         }
     },
     getters: {
-        getCurrentSelectSearch(state){
-            return state.currentSelectSearch;
-        },
         getSchemas(state){
             return state.schemas;
         },

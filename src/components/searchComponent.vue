@@ -12,7 +12,7 @@
       />
     </div>
     <div
-        v-if="getCurrentSelectSearch !== 'all' && !isNil(getCurrentSelectSearch)"
+        v-if="typeSearch !== 'all' && !isNil(typeSearch)"
         class="ma-auto mt-5"
         style="width: 50%; min-width: 200px"
     >
@@ -74,15 +74,35 @@ import {useStore} from "../store";
 import _ from 'lodash'
 const {isNil} = useLodash();
 
+const {
+  signOut
+} = useSession()
+
+const router = useRouter();
+
 let data = ref([]);
 let pages = ref([]);
 let isLoading = ref(false);
 let search = ref('');
 let page = ref();
 
+//props
+const props = defineProps({
+  typeSearch:{
+    type: String,
+    required: true
+  }
+})
+const {typeSearch} = toRefs(props);
 //store
 const store = useStore();
 
+onMounted(() => {
+  store.setCurrentSelectSearch(typeSearch.value)
+
+  if(typeSearch.value === 'all')
+    clickSearch();
+})
 //api
 const {getAll, searchLocal, searchDynamic} = useApi();
 
@@ -90,25 +110,8 @@ watch(data, () => {
   setPages();
 })
 
-const getCurrentSelectSearch = computed(() => {
-  const type = store.getCurrentSelectSearch;
-
-  data.value = null;
-  pages.value = null;
-  page.value = null;
-
-  switch (type) {
-    case 'all':
-      getAll().then(rs => {
-        data.value = rs;
-      })
-  }
-
-  return type;
-});
-
 const getPathImages = computed( () => {
-  switch (getCurrentSelectSearch.value) {
+  switch (typeSearch.value) {
     case null:
     case 'all':
     case "local":
@@ -121,7 +124,7 @@ const getPathImages = computed( () => {
 });
 
 const getStyleBanner = computed(() => {
-  switch (getCurrentSelectSearch.value) {
+  switch (typeSearch.value) {
     case null:
     case 'all':
     case "local":
@@ -157,7 +160,7 @@ function setPages() {
 async function clickSearch() {
   isLoading.value = true;
   try{
-    switch (getCurrentSelectSearch.value) {
+    switch (typeSearch.value) {
       case 'all':
         data.value = await getAll();
         break;

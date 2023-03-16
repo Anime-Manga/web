@@ -10,3 +10,9 @@
   background-color: #52c452 !important;
   color: white !important;
 }
+
+#main {
+  background-image: url("/images/background.jpg");
+  background-repeat: repeat-y;
+  background-size: contain;
+}

@@ -51,18 +51,3 @@ const getStatus = computed(() => {
   }
 });
 </script>
-<script>
-import lodash from '/mixins/lodash'
-
-export default {
-  name: "progressBar",
-  props: [
-    'item'
-  ],
-  mixins: [
-    lodash
-  ],
-  computed: {
-  }
-}
-</script>

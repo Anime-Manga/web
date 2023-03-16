@@ -54,7 +54,9 @@ export default defineNuxtPlugin(nuxtApp => {
                 share: 'fa-square-share-nodes',
                 arrowUp: 'fa-arrow-up',
                 arrowDown: 'fa-arrow-down',
-                video: 'fa-film'
+                video: 'fa-film',
+                login: 'fa-right-to-bracket',
+                logout: 'fa-right-from-bracket'
             },
             sets: {
                 fa
