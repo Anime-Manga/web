@@ -9,6 +9,7 @@
         />
       </div>
       <v-text-field
+          density="compact"
           color="primary"
           variant="outlined"
           v-model="username"
@@ -16,20 +17,30 @@
           @keydown.enter="login()"
       />
       <v-text-field
+          density="compact"
           color="primary"
           variant="outlined"
           :type="show? 'text' : 'password'"
           v-model="password"
-          @click:appendInner="show.value = !show"
+          :append-inner-icon="show? '$show' : '$hide'"
+          @click:appendInner="show = !show"
           label="Password"
           @keydown.enter="login()"
       />
       <v-btn
           block
+          class="mb-3"
           color="primary"
-          @click="login"
+          @click="login()"
       >
         Login
+      </v-btn>
+      <v-btn
+          block
+          color="secondary"
+          to="/auth/register"
+      >
+        Register
       </v-btn>
     </div>
   </div>

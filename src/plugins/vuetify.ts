@@ -34,6 +34,8 @@ export default defineNuxtPlugin(nuxtApp => {
         icons:{
             defaultSet: 'fa',
             aliases: {
+                show: 'fa-eye',
+                hide: 'fa-eye-slash',
                 database:'fa-database',
                 search:'fa-search',
                 planet: 'fa-earth-europe',

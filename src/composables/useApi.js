@@ -92,6 +92,11 @@ export default function useApi(){
             result = await $fetch(`/api/manga/register`, {query:{id},method: 'get', timeout: TIMEOUT});
       return parse(result);
     }
+
+    async function registerAccount(username, password){
+        let result = await $fetch(`/api/account/register`, {body: JSON.stringify({username, password}), method: 'post', timeout: TIMEOUT});
+        return parse(result);
+    }
     
     return{
         getAll,
@@ -103,6 +108,7 @@ export default function useApi(){
         reDownloadContent,
         removeContent,
         getStatus,
-        getRegister
+        getRegister,
+        registerAccount
     }
 }
