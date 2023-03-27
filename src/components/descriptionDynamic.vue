@@ -51,6 +51,7 @@ function check(index) {
     case 'type':
     case 'cover':
     case 'url_page':
+    case 'watchList':
       return false;
     default:
       return true;

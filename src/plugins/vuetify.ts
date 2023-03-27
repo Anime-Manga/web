@@ -10,8 +10,10 @@ import { fa } from 'vuetify/iconsets/fa-svg'
 import { library, config } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { fas as fasFree } from '@fortawesome/free-solid-svg-icons'
+import { far as farFree } from '@fortawesome/free-regular-svg-icons'
+
 config.autoAddCss = false
-library.add(fasFree);
+library.add(fasFree, farFree);
 
 export default defineNuxtPlugin(nuxtApp => {
     const vuetify = createVuetify({
@@ -58,7 +60,9 @@ export default defineNuxtPlugin(nuxtApp => {
                 arrowDown: 'fa-arrow-down',
                 video: 'fa-film',
                 login: 'fa-right-to-bracket',
-                logout: 'fa-right-from-bracket'
+                logout: 'fa-right-from-bracket',
+                saved: 'fa-bookmark',
+                notSaved:'fa-regular fa-bookmark'
             },
             sets: {
                 fa

@@ -12,7 +12,7 @@
       />
     </div>
     <div
-        v-if="typeSearch !== 'all' && !isNil(typeSearch)"
+        v-if="typeSearch !== 'all' && typeSearch !== 'search-watchlist' && !isNil(typeSearch)"
         class="ma-auto mt-5"
         style="width: 50%; min-width: 200px"
     >
@@ -75,7 +75,8 @@ import _ from 'lodash'
 const {isNil} = useLodash();
 
 const {
-  signOut
+  signOut,
+  data: account
 } = useSession()
 
 const router = useRouter();
@@ -100,11 +101,11 @@ const store = useStore();
 onMounted(() => {
   store.setCurrentSelectSearch(typeSearch.value)
 
-  if(typeSearch.value === 'all')
+  if(typeSearch.value === 'all' || typeSearch.value === 'search-watchlist')
     clickSearch();
 })
 //api
-const {getAll, searchLocal, searchDynamic} = useApi();
+const {getAll, searchLocal, searchDynamic, getAllWatchList} = useApi();
 
 watch(data, () => {
   setPages();
@@ -115,6 +116,7 @@ const getPathImages = computed( () => {
     case null:
     case 'all':
     case "local":
+    case "search-watchlist":
       return "/images/bar-anime.jpg";
     case "search-animesaturn":
       return "/images/logo_animesaturn.png";
@@ -128,6 +130,7 @@ const getStyleBanner = computed(() => {
     case null:
     case 'all':
     case "local":
+    case "search-watchlist":
       return "width: 100%;";
     case "search-animesaturn":
       return "width: 25%;";
@@ -162,10 +165,14 @@ async function clickSearch() {
   try{
     switch (typeSearch.value) {
       case 'all':
-        data.value = await getAll();
+        data.value = await getAll(account.value.user.name);
         break;
       case "local":
-        data.value = await searchLocal(search.value);
+        data.value = await searchLocal(search.value, account.value.user.name);
+        break;
+
+      case "search-watchlist":
+        data.value = await getAllWatchList(account.value.user.name)
         break;
       default:
         const schema = store.getSchemasBySelectSearch;

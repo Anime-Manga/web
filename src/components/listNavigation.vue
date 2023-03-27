@@ -89,6 +89,11 @@ const getSchemas = computed(() => {
   if(status.value === 'authenticated')
   {
     items.push({
+      'id':`watchList`,
+      text:`WatchList`,
+      icon: '$saved',
+      route: '/search/search-watchlist'
+    },{
       'id':`logout`,
       text:`Logout`,
       icon: '$logout',

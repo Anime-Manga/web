@@ -15,8 +15,13 @@ export default function useApi(){
         return parse(result);
     }
 
-    async function getAll(){
-        const result = await $fetch(`/api/all`, {method: 'get', timeout: TIMEOUT});
+    async function getAll(username = null){
+        const result = await $fetch(`/api/all`, {method: 'get', params:{username}, timeout: TIMEOUT});
+        return parse(result);
+    }
+
+    async function getAllWatchList(username){
+        let result = await $fetch(`/api/search-watchlist`, {query: {username}, method: 'get', timeout: TIMEOUT});
         return parse(result);
     }
 
@@ -25,8 +30,8 @@ export default function useApi(){
         return parse(result);
     }
 
-    async function searchLocal(name){
-        const result = await $fetch(`/api/search-local`, {query: {name}, method: 'get', timeout: TIMEOUT});
+    async function searchLocal(name, username = null){
+        const result = await $fetch(`/api/search-local`, {query: {name, username}, method: 'get', timeout: TIMEOUT});
         return parse(result);
     }
     
@@ -83,6 +88,8 @@ export default function useApi(){
       return parse(result);
     }
 
+
+    //account
     async function getRegister(type, id){
         let result;
 
@@ -97,6 +104,17 @@ export default function useApi(){
         let result = await $fetch(`/api/account/register`, {body: JSON.stringify({username, password}), method: 'post', timeout: TIMEOUT});
         return parse(result);
     }
+
+    //watchlist
+    async function addWatchList(username, name, nameCfg){
+        let result = await $fetch(`/api/account/watchlist`, {body: JSON.stringify({username, name, nameCfg}), method: 'post', timeout: TIMEOUT});
+        return parse(result);
+    }
+
+    async function removeWatchList(username, name, nameCfg){
+        let result = await $fetch(`/api/account/watchlist`, {body: JSON.stringify({username, name, nameCfg}), method: 'delete', timeout: TIMEOUT});
+        return parse(result);
+    }
     
     return{
         getAll,
@@ -109,6 +127,9 @@ export default function useApi(){
         removeContent,
         getStatus,
         getRegister,
-        registerAccount
+        registerAccount,
+        getAllWatchList,
+        addWatchList,
+        removeWatchList
     }
 }

@@ -78,6 +78,16 @@
               </v-icon>
             </template>
           </v-btn>
+          <template v-if="!isNil(account.user) || !isNil(item.watchList)">
+            <v-btn
+                color="info ml-1"
+                @click="setWatchList(item.watchList)"
+            >
+              <v-icon>
+                {{item.watchList? '$saved' : '$notSaved'}}
+              </v-icon>
+            </v-btn>
+          </template>
         </template>
       </v-card-item>
       <v-card-item class="pa-2">
@@ -117,8 +127,11 @@ const {isNil} = useLodash();
 //store
 const store = useStore();
 
+//user
+const {data: account} = useSession();
+
 //api
-const {downloadContent, reDownloadContent, removeContent} = useApi();
+const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList} = useApi();
 
 const emit = defineEmits(['closeDialog','closeDialogAndUpdate','updateData']);
 
@@ -188,6 +201,18 @@ function closeAndUpdate(){
 
 function close(){
   emit('closeDialog');
+}
+
+async function setWatchList(state){
+  let username = account.value.user.name;
+  try {
+    if(state === true)
+      await removeWatchList(username, item.value.name_id, item.value.nameCfg);
+    else
+      await addWatchList(username, item.value.name_id, item.value.nameCfg);
+
+    item.value.watchList = !state;
+  }catch{}
 }
 </script>
 

@@ -4,11 +4,11 @@
       class="fill-height"
   >
     <searchComponent
-        typeSearch="local"
+        typeSearch="search-watchlist"
     />
   </div>
 </template>
 
 <script setup>
-definePageMeta({ auth: false })
+definePageMeta({ auth: true })
 </script>

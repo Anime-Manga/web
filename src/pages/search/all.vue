@@ -9,13 +9,6 @@
   </div>
 </template>
 
-<script>
+<script setup>
 definePageMeta({ auth: false })
-export default {
-  name: "all"
-}
 </script>
-
-<style scoped>
-
-</style>

@@ -9,13 +9,6 @@
   </div>
 </template>
 
-<script>
+<script setup>
 definePageMeta({ auth: false })
-export default {
-  name: "search-manaworld-adult"
-}
 </script>
-
-<style scoped>
-
-</style>

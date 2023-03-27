@@ -13,7 +13,10 @@ export default NuxtAuthHandler({
             name: 'Credentials',
             async authorize (credentials: any) {
                 try{
-                    return await $fetch(`${API_BASE}/auth/login`, {body:{username: credentials?.username, password: credentials?.password}, method: 'post'})
+                    let user = await $fetch(`${API_BASE}/auth/login`, {body:{username: credentials?.username, password: credentials?.password}, method: 'post'});
+                    return {
+                        name: user.username
+                    };
                 }catch(err){
                     console.log(err);
                     return null;
