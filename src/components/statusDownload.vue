@@ -123,34 +123,23 @@ const props = defineProps({
   item:{
     type: Object,
     required: true
-  }
+  },
+  contents:Object
 })
 
-const {item} = toRefs(props);
+const {item, contents: getContents} = toRefs(props);
 
 watch(item, () => date.value = new Date());
 
-watch(date, () => {
-  if(_.isNil(item.value.urlPageDownload))
-    {
-      setTimeout(async () => {
-        try{
-          const result = await getStatus(item.value.type, item.value.name_id);
-          contents.value = colletion(result);
-        }catch(err){
-          console.log(err);
-        }finally{
-          date.value = new Date();
-        }
-      }, 1000);
-    }
-}, {immediate: true})
+watch(getContents, () => {
+  contents.value = collection(getContents.value);
+})
 
-function colletion(result){
+function collection(result){
   let collection = [];
   for (const object of result) {
     let version;
-    if(_.has(object, 'currentVolume'))
+    if(useHas(object, 'currentVolume'))
       version = object.currentVolume;
     else
       version = object.numberSeasonCurrent;

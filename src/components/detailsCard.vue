@@ -21,7 +21,7 @@
           </v-icon>
         </v-btn>
         <template
-            v-if="!isNil(this.item.urlPageDownload)"
+            v-if="!isNil(item.urlPageDownload)"
         >
           <v-btn
               color="warning"
@@ -78,7 +78,7 @@
               </v-icon>
             </template>
           </v-btn>
-          <template v-if="!isNil(account.user) || !isNil(item.watchList)">
+          <template v-if="!isNil(account?.user) || !isNil(item.watchList)">
             <v-btn
                 color="info ml-1"
                 @click="setWatchList(item.watchList)"
@@ -112,10 +112,16 @@
       </v-card-title>
       <v-card-text>
         <descriptionDynamic
-            :item="item"
+          :item="item"
+        />
+        <getStarted
+          class="mt-2"
+          :item="item"
+          :contents="contents"
         />
         <statusDownload
-            :item="item"
+          :item="item"
+          :contents="contents"
         />
       </v-card-text>
     </v-card>
@@ -123,7 +129,6 @@
 </template>
 <script setup>
 import {useStore} from "../store";
-const {isNil} = useLodash();
 //store
 const store = useStore();
 
@@ -131,7 +136,7 @@ const store = useStore();
 const {data: account} = useSession();
 
 //api
-const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList} = useApi();
+const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus} = useApi();
 
 const emit = defineEmits(['closeDialog','closeDialogAndUpdate','updateData']);
 
@@ -150,6 +155,27 @@ const isLoadingDownload = ref(false);
 const isLoadingReDownload = ref(false);
 const isLoadingDelete = ref(false);
 const error = ref(null);
+const date = ref(null);
+const contents = ref(null);
+
+
+watch(item, () => date.value = new Date());
+
+watch(date, () => {
+  if(isNil(item.value.urlPageDownload))
+    {
+      setTimeout(async () => {
+        try{
+          contents.value = await getStatus(item.value.type, item.value.name_id);
+        }catch(err){
+          console.log(err);
+        }finally{
+          date.value = new Date();
+        }
+      }, 1000);
+    }
+}, {immediate: true})
+
 
 async function download(){
   isLoadingDownload.value = true;

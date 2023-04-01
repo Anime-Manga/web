@@ -8,7 +8,8 @@ export default defineNuxtConfig({
         'nuxt-icons',
         '@pinia/nuxt',
         '@nuxt/devtools',
-        '@sidebase/nuxt-auth'
+        '@sidebase/nuxt-auth',
+        'nuxt-lodash'
     ],
     css: [
         'vuetify/lib/styles/main.sass',

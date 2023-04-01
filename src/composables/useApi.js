@@ -88,6 +88,16 @@ export default function useApi(){
       return parse(result);
     }
 
+    async function getProgress(type, name, username, nameCfg){
+        let result;
+
+        if(type === 'video')
+            result = await $fetch(`/api/anime/progress`, {query:{name, username, nameCfg}, method: 'get', timeout: TIMEOUT});
+        else
+            result = await $fetch(`/api/manga/progress`, {query:{name, username, nameCfg}, method: 'get', timeout: TIMEOUT});
+      return parse(result);
+    }
+
 
     //account
     async function getRegister(type, id){
@@ -130,6 +140,7 @@ export default function useApi(){
         registerAccount,
         getAllWatchList,
         addWatchList,
-        removeWatchList
+        removeWatchList,
+        getProgress
     }
 }

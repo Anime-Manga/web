@@ -165,14 +165,14 @@ async function clickSearch() {
   try{
     switch (typeSearch.value) {
       case 'all':
-        data.value = await getAll(account.value.user.name);
+        data.value = await getAll(account?.value?.user?.name);
         break;
       case "local":
-        data.value = await searchLocal(search.value, account.value.user.name);
+        data.value = await searchLocal(search.value, account?.value?.user?.name);
         break;
 
       case "search-watchlist":
-        data.value = await getAllWatchList(account.value.user.name)
+        data.value = await getAllWatchList(account?.value?.user?.name)
         break;
       default:
         const schema = store.getSchemasBySelectSearch;
