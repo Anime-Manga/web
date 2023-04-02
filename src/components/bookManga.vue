@@ -15,10 +15,6 @@
       </v-btn>
       <div id="my-manga">
         <template v-if="!modeList">
-          <cacheImg
-              v-if="data"
-              :data="data"
-          />
           <div class="d-flex flex-row align-center justify-center">
             <div
                 v-if="indexPage > 0 && (!modeMobile)"
@@ -82,11 +78,12 @@
               </div>
             </template>
             <img
+                v-for="index in (data.chapterPath.length)"
+                :src="getUrl(index - 1)"
+                :id="'page-'+(index - 1)"
                 ref="imgBooks"
                 class="img-page"
                 v-show="!loadingImage"
-                v-for="index in (data.chapterPath.length)"
-                :src="getUrl(index - 1)"
             />
             <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
               <v-progress-circular
@@ -126,7 +123,7 @@
           <div class="d-flex flex-row justify-space-around flex-wrap mb-2">
             <NuxtLink
                 v-if="getPreviousChapter"
-                :to="`/room?type=manga&chapter=${getPreviousChapter}&manga=${route.query.manga}`"
+                :to="`/room?type=manga&chapter=${getPreviousChapter}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`"
                 class="text-decoration-none"
             >
               <v-btn
@@ -140,10 +137,9 @@
                 Previous chapter
               </v-btn>
             </NuxtLink>
-            <div v-else></div>
             <NuxtLink
                 v-if="nextChapter"
-                :to="`/room?type=manga&chapter=${nextChapter}&manga=${route.query.manga}`"
+                :to="`/room?type=manga&chapter=${nextChapter}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`"
                 class="text-decoration-none"
             >
               <v-btn
@@ -166,8 +162,15 @@
           </v-btn>
           <v-btn
               @click="modeList = !modeList"
+              class="mr-3"
           >
             MODE: {{ modeList ? 'List' : 'Page' }}
+          </v-btn>
+          <v-btn
+              v-if="status === 'authenticated'"
+              @click="saveStatusProgress()"
+          >
+            Save Progress
           </v-btn>
         </div>
       </div>
@@ -181,7 +184,8 @@ import _ from 'lodash'
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
-const {getRegister, getStatus} = useApi();
+const { status, data: account } = useSession();
+const {getRegister, getStatus, saveProgress, getProgress} = useApi();
 
 //env
 const data = ref(null)
@@ -192,6 +196,7 @@ const loadingImage = ref(true)
 const showMenu = ref(false)
 const modeList = ref(false)
 const done = ref(0)
+const progress = ref(null);
 
 //refs
 const imgBook = ref(null);
@@ -201,19 +206,16 @@ const imgBooks = ref(null);
 const hostHTTP = ref(runtimeConfig.public.httpBase);
 const basePath = ref(runtimeConfig.public.basePath);
 
-
 onMounted(() => {
   load();
   checkDownload();
+
+  window.addEventListener("beforeunload", leaving);
 })
 
-onUpdated(() => {
-  if (data.value.chapterId !== route.query.chapter) {
-      done.value = 0;
-      loadingImage.value = true;
-      load();
-    }
-}) 
+onBeforeRouteLeave(async () => {
+  await saveStatusProgress();
+})
 
 //computed
 const getPreviousChapter = computed(() => {
@@ -241,28 +243,96 @@ const nextChapter = computed(() => {
     return chapters.value[index + 1].id
   return null;
 });
+
 //watch
 watch(done, () => {
-  if (done.value === (data.value.chapterPath.length - 1))
-    loadingImage.value = false;
+  if(!isNil(data))
+  {
+    if (done.value >= (data.value.chapterPath.length - 1) && modeList.value)
+    {
+      loadingImage.value = false;
+      if(!isNil(progress) && progress.value.nameChapter === route.query.chapter)
+      {
+        setTimeout(() => {
+          const page = document.getElementById(`page-${progress.value.page}`);
+          page.scrollIntoView({
+            behavior: 'smooth'
+          });
+        }, 250);
+      }
+    }
+  }
 })
 
 watch(data, () => {
-  checkDownload();
+  setTimeout(() => checkDownload(), 250);
 })
 
+watch(modeList, () => {
+  loadingImage.value = true;
+
+  setTimeout(() => checkDownload(), 250);
+});
+
+watch(route, async () => {
+  if (data.value.chapterId !== route.query.chapter) {
+    await saveStatusProgress();
+    done.value = 0;
+    data.value = null;
+    progress.value = null;
+    indexPage.value = 0;
+    loadingImage.value = true;
+    load();
+  }
+})
+  
+
 //functions
+async function leaving(){
+  await saveStatusProgress();
+}
+
+async function saveStatusProgress(page = indexPage){
+  if(status.value === 'authenticated')
+  {
+    if(modeList.value)
+    {
+      const scroll = document.getElementsByClassName('contain-page')[0];
+      
+      for (var i = 0; i<done.value; i++) {
+        const img = document.getElementById('page-'+i)
+        if(scroll.scrollTop <= img.offsetTop)
+        {
+          progress.value.page = i;
+          break;
+        }
+      }
+    }else
+      progress.value.page = page;
+
+    progress.value.nameChapter = data.value.chapterId;
+    progress.value = await saveProgress('book', progress.value)
+  }
+}
+
 function checkDownload() {
-  console.log(imgBook.value);
   if (!_.isNil(imgBook.value)) {
     imgBook.value.onload = function () {
       loadingImage.value = false;
     }
   } else if (!_.isNil(imgBooks.value)) {
     for (const img of imgBooks.value) {
-      img.onload = function () {
+      if(img.complete)
+      {
         done.value += 1;
-      }
+      }else{
+        img.onload = function () {
+          done.value += 1;
+        }
+        }
+        img.onerror = function () {
+          done.value += 1;
+        }
     }
   }
 }
@@ -333,16 +403,36 @@ function closeFullscreenMobile() {
 }
 
 async function load() {
+  if(status.value === 'authenticated')
+  {
+    try{
+      progress.value = await getProgress('book', route.query.name, account.value.user.name, route.query.nameCfg);
+    }catch{
+      progress.value = {
+        nameCfg: route.query.nameCfg,
+        name: route.query.name,
+        nameChapter: route.query.name,
+        username: account.value.user.name,
+        page: 0
+      }
+    }
+  }
+
   try{
     const result = await getRegister('book', route.query.chapter)
-    indexPage.value = 0;
+
+    if(!isNil(progress.value) && progress.value.nameChapter === result.chapterId)
+      indexPage.value = progress.value.page;
+    else
+      indexPage.value = 0;
+
     data.value = result;
   }catch(err){
     console.log(err);
   }
 
   try{
-    const result = await getStatus('book', route.query.manga)
+    const result = await getStatus('book', route.query.name)
     chapters.value = result;
   }catch(err){
     console.log(err);
