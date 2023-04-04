@@ -84,7 +84,7 @@ async function setProgress(){
 function getPath(){
   if(item.value.type === 'video')
   {
-    return `/room?type=anime&episode=${foundMedia.value.id}`;
+    return `/room?type=anime&episode=${foundMedia.value.id}&nameCfg=${item.value.nameCfg}&name=${item.value.name_id}`;
   }
   else
   {

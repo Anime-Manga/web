@@ -1,61 +1,85 @@
 <template>
-  <div
-      class="d-flex flex-column align-center"
-  >
-    <v-btn
-        style="color: white !important;"
-        color="info"
-        class="ma-1"
-        @click="close()"
-    >
-      Go to Home
-    </v-btn>
+  <div class="d-flex flex-column align-center">
     <div class="contain-video">
       <video id="my-video" controls>
-        <template v-if="episode != null && data != null">
+        <template v-if="data != null">
           <source :src="getUrl(data.episodePath)" type="video/mp4">
         </template>
       </video>
     </div>
-    <div
-        class="ma-2"
-    >
-        <span v-if="!isNil(idRoom)" class="link-share">
-          <v-icon
-              class="mr-3"
-          >
-            $share
-          </v-icon>
-          {{ `${hostWeb}/room?idroom=${idRoom}&type=anime` }}
-        </span>
+    <div class="ma-2">
+      <span v-if="!isNil(idRoom)" class="link-share">
+        <v-icon class="mr-3">
+          $share
+        </v-icon>
+        {{ `${hostWeb}/room?idroom=${idRoom}&type=anime` }}
+      </span>
     </div>
 
     <div class="d-flex justify-center" style="width: 100%">
-      <div v-for="(user, index) in users" class="ma-3">
-        <userSession :nickname="user.nickname" :root="index === 0" :currentUser="currentUser"/>
+      <template v-if="isNil(startedWs) || startedWs === false">
+        <v-btn color="warning" @click="startCoreWs()">
+          Create room
+        </v-btn>
+      </template>
+      <template v-else>
+        <div v-for="(user, index) in users" class="ma-3">
+          <userSession :nickname="user.nickname" :root="index === 0" :currentUser="currentUser" />
+        </div>
+      </template>
+    </div>
+    <div class="menu" v-if="!isNil(startedWs) && (startedWs === true && users[0].nickname === currentUser || startedWs === false)">
+      <div class="d-flex justify-center">
+        <v-icon color="white" @click="showMenu = !showMenu">
+          {{ showMenu ? '$arrowDown' : '$arrowUp' }}
+        </v-icon>
+      </div>
+      <div v-if="showMenu">
+        <div v-if="data" class="currentEpisode">
+          Current Episopde: {{ data.episodeId }}
+        </div>
+        <div class="d-flex flex-row justify-space-around flex-wrap mb-2">
+          <v-btn v-if="getPreviousEpisode" color="primary" class="text-decoration-none"
+            @click="navigateTo(`/room?type=anime&episode=${getPreviousEpisode}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)">
+            <v-icon class="mr-2">
+              $arrowLeft
+            </v-icon>
+            Previous chapter
+          </v-btn>
+
+          <v-btn v-if="nextEpisode" color="secondary"
+            @click="navigateTo(`/room?type=anime&episode=${nextEpisode}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)"
+            class="text-decoration-none">
+            Next chapter
+            <v-icon class="ml-2">
+              $arrowRight
+            </v-icon>
+          </v-btn>
+        </div>
+        <v-btn v-if="status === 'authenticated'" @click="saveStatusProgress()">
+          Save Progress
+        </v-btn>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import mitt from "mitt";
-import pkg from 'websocket';
-const {w3cwebsocket} = pkg;
-
 const runtimeConfig = useRuntimeConfig();
+
 const route = useRoute();
 const router = useRouter();
-const {getRegister} = useApi();
-const {isNil} = useLodash();
 
-const hostSocket = ref(runtimeConfig.public.socketBase);
+const { getRegister, getStatus, getProgress, saveProgress } = useApi();
+const { status, data: account } = useSession();
+
+const { ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useWs();
+
 const hostHTTP = ref(runtimeConfig.public.httpBase);
 const hostWeb = ref(runtimeConfig.public.webBase);
 const basePath = ref(runtimeConfig.public.basePath);
-const hide = ref("");
+const progress = ref(null);
 const data = ref(null);
-const ws = ref(null);
 const idRoom = ref(null);
 const root = ref(null);
 const currentUser = ref(null);
@@ -63,84 +87,30 @@ const users = ref(null);
 const episode = ref(null);
 const pause = ref(null);
 const time = ref(0);
-const room = ref(null);
-const type = ref(null);
+const showMenu = ref(false);
+const episodes = ref(null);
 
-onMounted(() => {
-  room.value = mitt();
-  console.log("Starting connection to WebSocket Server");
+onMounted(async () => {
+  let vid = document.getElementById("my-video");
+  window.addEventListener("beforeunload", leaving);
 
-  ws.value = new w3cwebsocket(hostSocket.value);
+  if(!isNil(route.query.idroom))
+    startCoreWs();
+  else
+  {
+    //get
+    await getProgressStatus();
+    await getVideoEpisode();
 
-  //sockets
-  ws.value.onopen = function () {
-    console.log("Successfully connected to the echo WebSocket Server");
-    console.log(ws.value)
-    room.value.emit('checkRoom');
-  };
-  ws.value.onmessage = function (event) {
-    console.log(event);
-    room.value.emit('socket-message', event);
-  }
-  room.value.on('socket-message', (event) => {
-    console.log("Un messaggio arrivato: ");
-    console.log(event.data)
-    var data = JSON.parse(event.data)
-    if (data.action === 'registration') {
-      root.value = data.nickname
-      episode.value = route.query.episode;
-      getVideoEpisode();
-
-    } else if (data.action === 'UpdateRoom') {
-      idRoom.value = data.room.id_room
-      users.value = data.room.clients
-      time.value = data.room.t
-      pause.value = data.room.pause
-    } else if (data.action === 'loadVideo') {
-      idRoom.value = data.id
-      root.value = data.nickname
-      episode.value = data.episode
-    } else if (data.action === 'currentTime') {
-      room.value.emit('currentTime')
+    
+    if (isNil(route.query.idroom) && !isNil(progress.value)) {
+      let time = (progress.value.hours * 3600) + (progress.value.minutes * 60) + progress.value.seconds;
+      vid.currentTime = time;
     }
-  });
-  room.value.on('checkRoom', () => {
-    console.log('check')
-    console.log(ws.value)
-    if (route.query.idroom == null)
-      room.value.emit('createRoom');
-    else
-      room.value.emit('joinRoom');
-  });
-  room.value.on('createRoom', () => {
-    currentUser.value = new Date().getUTCMilliseconds().toString();
-    const data = {nickname: currentUser.value, episode: route.query.episode};
-    ws.value.send(JSON.stringify({action: 'create', data}))
-    console.log('request registration');
-  });
-  room.value.on('joinRoom', () => {
-    currentUser.value = new Date().getUTCMilliseconds().toString();
-    sendMessage('join', {nickname: currentUser.value, idRoom: route.query.idroom})
-    console.log('request join');
-  });
-  room.value.on('pause', (statePause) => {
-    sendMessage('updatePause', {pause: statePause, idRoom: idRoom.value})
-    console.log('request updatePause');
-  });
-  room.value.on('time', (stateTime) => {
-    sendMessage('updateTime', {time: stateTime, idRoom: idRoom.value})
-    console.log('request updatePause');
-  });
-  room.value.on('currentTime', () => {
-    let vid = document.getElementById("my-video");
-    sendMessage('currentTime', {time: vid.currentTime, idRoom: idRoom.value})
-    console.log('request currentTime');
-  });
+  }
 
   //event
-  let vid = document.getElementById("my-video");
   vid.addEventListener("canplaythrough", () => {
-    console.log('canplaythrough');
     let vid = document.getElementById("my-video");
     if (vid.currentTime > 0)
       room.value.emit('time', vid.currentTime);
@@ -149,10 +119,44 @@ onMounted(() => {
     room.value.emit('pause', true);
   });
   vid.addEventListener("playing", () => {
+    console.log(progress.value);
     room.value.emit('pause', false);
   });
 })
 
+onBeforeRouteLeave(async () => {
+  stopWs();
+  await saveStatusProgress();
+})
+
+//computed
+const getPreviousEpisode = computed(() => {
+  if (episodes.value.length <= 0)
+    return null;
+
+  const episodeId = data.value.episodeId;
+
+  const index = episodes.value.findIndex(episode => episode.id === episodeId)
+
+  if (index > 0)
+    return episodes.value[index - 1].id
+  return null;
+})
+
+const nextEpisode = computed(() => {
+  if (episodes.value.length <= 0)
+    return null;
+
+  const episodeId = data.value.episodeId;
+
+  const index = episodes.value.findIndex(episode => episode.id === episodeId)
+
+  if (index <= episodes.value.length)
+    return episodes.value[index + 1].id
+  return null;
+});
+
+//watch
 watch(episode, () => {
   getVideoEpisode(episode.value);
 });
@@ -176,11 +180,16 @@ watch(pause, () => {
   }
 })
 
-function sendMessage(setAction, data) {
-  console.log(ws.value);
-  ws.value.send(JSON.stringify({action: setAction, data}))
-}
+watch(() => route.query.episode, async () => {
+  await getProgressStatus();
+  await getVideoEpisode();
 
+  
+  let vid = document.getElementById("my-video");
+  vid.src = getUrl(data.value.episodePath);
+})
+
+//functions
 function getUrl(url) {
   if (url.includes(':')) {
     url = url.replace(/\\/g, '\\\\');
@@ -189,23 +198,130 @@ function getUrl(url) {
   return `${hostHTTP.value}/${url}`;
 }
 
-async function getVideoEpisode() {
-  //get api internal
-  data.value = await getRegister('video', episode.value);
+async function leaving() {
+  await saveStatusProgress();
 }
 
-function close() {
-  ws.value.close();
-  console.log('Closed WebSocket')
-  ws.value = null;
-  router.push('/')
+async function saveStatusProgress() {
+  if (status.value === 'authenticated') {
+    let vid = document.getElementById("my-video");
+    let currentSeconds = vid.currentTime;
+    progress.value.hours = Math.floor(currentSeconds / 3600);
+    currentSeconds -= progress.value.hours * 3600;
+
+    progress.value.minutes = Math.floor(currentSeconds / 60);
+    currentSeconds -= progress.value.minutes * 60;
+
+    progress.value.seconds = Math.floor(currentSeconds);
+    progress.value.nameEpisode = route.query.episode;
+
+    progress.value = await saveProgress('video', progress.value)
+  }
+}
+
+function startCoreWs() {
+  room.value.on('socket-message', (event) => {
+    console.log("Un messaggio arrivato: ");
+    console.log(event.data)
+    var data = JSON.parse(event.data)
+    if (data.action === 'registration') {
+      root.value = data.nickname
+      episode.value = route.query.episode;
+    } else if (data.action === 'UpdateRoom') {
+      idRoom.value = data.room.id_room
+      users.value = data.room.clients
+      time.value = data.room.t
+      pause.value = data.room.pause
+    } else if (data.action === 'loadVideo') {
+      idRoom.value = data.id
+      root.value = data.nickname
+      episode.value = data.episode
+    } else if (data.action === 'currentTime') {
+      room.value.emit('currentTime')
+    }
+  });
+
+  room.value.on('checkRoom', () => {
+    console.log('check')
+    if (route.query.idroom == null)
+      room.value.emit('createRoom');
+    else
+      room.value.emit('joinRoom');
+  });
+
+  room.value.on('createRoom', () => {
+    currentUser.value = account.value? account.value.user.name : new Date().getUTCMilliseconds().toString();
+    const data = { nickname: currentUser.value, episode: route.query.episode };
+    ws.value.send(JSON.stringify({ action: 'create', data }))
+    console.log('request registration');
+  });
+
+  room.value.on('joinRoom', () => {
+    currentUser.value = account.value? account.value.user.name : new Date().getUTCMilliseconds().toString();
+    sendMessage('join', { nickname: currentUser.value, idRoom: route.query.idroom })
+    console.log('request join');
+  });
+
+  room.value.on('pause', (statePause) => {
+    sendMessage('updatePause', { pause: statePause, idRoom: idRoom.value })
+    console.log('request updatePause');
+  });
+
+  room.value.on('time', (stateTime) => {
+    sendMessage('updateTime', { time: stateTime, idRoom: idRoom.value })
+    console.log('request updatePause');
+  });
+
+  room.value.on('currentTime', () => {
+    let vid = document.getElementById("my-video");
+    sendMessage('currentTime', { time: vid.currentTime, idRoom: idRoom.value })
+    console.log('request currentTime');
+  });
+
+
+  startWs();
+}
+
+function sendMessage(setAction, data) {
+  console.log(ws.value);
+  ws.value.send(JSON.stringify({ action: setAction, data }))
+}
+
+async function getVideoEpisode() {
+  //get api internal
+  if(isNil(route.query.idroom))
+    data.value = await getRegister('video', route.query.episode);
+  else
+    data.value = await getRegister('video', episode.value);
+
+  if (isNil(route.query.idroom))
+    episodes.value = await getStatus('video', route.query.name);
+}
+
+async function getProgressStatus() {
+  if (status.value === 'authenticated') {
+    try {
+      progress.value = await getProgress('video', route.query.name, account.value.user.name, route.query.nameCfg);
+    } catch {
+      progress.value = {
+        nameCfg: route.query.nameCfg,
+        name: route.query.name,
+        nameEpisode: route.query.episode,
+        username: account.value.user.name,
+        hours: 0,
+        minutes: 0,
+        seconds: 0
+      }
+    }
+  }
 }
 </script>
 
 <style lang="scss" scoped>
-.contain-video{
+.contain-video {
   width: 70%;
 }
+
 .link-share {
   background-color: white;
   padding: 10px;
@@ -215,5 +331,26 @@ function close() {
 #my-video {
   width: 100%;
   height: auto;
+}
+
+.menu {
+  padding: 5px 10px 10px 10px;
+  z-index: 1;
+  width: 100%;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  transition: 0.5s;
+  text-align: center;
+
+  .currentEpisode {
+    font-weight: bold;
+    color: white;
+  }
+
+  &.active {
+    bottom: 0;
+  }
 }
 </style>
