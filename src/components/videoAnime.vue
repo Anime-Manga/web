@@ -12,7 +12,7 @@
         <v-icon class="mr-3">
           $share
         </v-icon>
-        {{ `${hostWeb}/room?idroom=${idRoom}&type=anime` }}
+        {{ `${hostWeb}/room?idroom=${idRoom}&type=anime&name=${route.query.name}` }}
       </span>
     </div>
 
@@ -28,7 +28,7 @@
         </div>
       </template>
     </div>
-    <div class="menu" v-if="!isNil(startedWs) && (startedWs === true && users[0].nickname === currentUser || startedWs === false)">
+    <div class="menu" v-if="!isNil(startedWs) && (startedWs === true &&  !isNil(users) && users.length > 0 && users[0].nickname === currentUser || startedWs === false)">
       <div class="d-flex justify-center">
         <v-icon color="white" @click="showMenu = !showMenu">
           {{ showMenu ? '$arrowDown' : '$arrowUp' }}
@@ -84,7 +84,6 @@ const idRoom = ref(null);
 const root = ref(null);
 const currentUser = ref(null);
 const users = ref(null);
-const episode = ref(null);
 const pause = ref(null);
 const time = ref(0);
 const showMenu = ref(false);
@@ -157,9 +156,6 @@ const nextEpisode = computed(() => {
 });
 
 //watch
-watch(episode, () => {
-  getVideoEpisode(episode.value);
-});
 
 watch(time, () => {
   var vid = document.getElementById("my-video");
@@ -183,6 +179,10 @@ watch(pause, () => {
 watch(() => route.query.episode, async () => {
   await getProgressStatus();
   await getVideoEpisode();
+
+  console.log(startedWs, failedWs);
+  if(getAdmin())
+    room.value.emit('changeSource');
 
   
   let vid = document.getElementById("my-video");
@@ -226,16 +226,30 @@ function startCoreWs() {
     var data = JSON.parse(event.data)
     if (data.action === 'registration') {
       root.value = data.nickname
-      episode.value = route.query.episode;
     } else if (data.action === 'UpdateRoom') {
       idRoom.value = data.room.id_room
       users.value = data.room.clients
       time.value = data.room.t
       pause.value = data.room.pause
+
+      if(isNil(episodes.value) && users.value[0].nickname === currentUser.value)
+        getVideoEpisode();
+
+      if(!isNil(data.room.episode) && route.query.episode !== data.room.episode)
+      {
+        router.push({
+          path: route.fullPath,
+          query:{...route.query, episode: data.room.episode}
+        })
+      }
     } else if (data.action === 'loadVideo') {
       idRoom.value = data.id
       root.value = data.nickname
-      episode.value = data.episode
+
+      router.push({
+        path: route.fullPath,
+        query:{...route.query, episode: data.episode}
+      })
     } else if (data.action === 'currentTime') {
       room.value.emit('currentTime')
     }
@@ -278,6 +292,12 @@ function startCoreWs() {
     console.log('request currentTime');
   });
 
+  room.value.on('changeSource', () => {
+    const data = { episode: route.query.episode, idRoom: idRoom.value };
+    ws.value.send(JSON.stringify({ action: 'changeSource', data }))
+    console.log('request change source');
+  });
+
 
   startWs();
 }
@@ -289,12 +309,9 @@ function sendMessage(setAction, data) {
 
 async function getVideoEpisode() {
   //get api internal
-  if(isNil(route.query.idroom))
-    data.value = await getRegister('video', route.query.episode);
-  else
-    data.value = await getRegister('video', episode.value);
+  data.value = await getRegister('video', route.query.episode);
 
-  if (isNil(route.query.idroom))
+  if (isNil(route.query.idroom) || getAdmin())
     episodes.value = await getStatus('video', route.query.name);
 }
 
@@ -314,6 +331,12 @@ async function getProgressStatus() {
       }
     }
   }
+}
+
+function getAdmin(){
+  if(!isNil(users.value) && users.value.length > 0 && users.value[0].nickname === currentUser.value && !isNil(startedWs) && startedWs.value === true && failedWs.value === false)
+    return true;
+  return false;
 }
 </script>
 
