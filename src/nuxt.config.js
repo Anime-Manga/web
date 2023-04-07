@@ -1,5 +1,13 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import vuetify from 'vite-plugin-vuetify'
+
 export default defineNuxtConfig({
+    app:{
+        head:{
+            link: [
+                { rel: 'stylesheet', href: '/assets-icons/css/all.min.css' }
+            ]
+        }
+    },
     components:{
         global: true,
         dirs: ['~/components'],
@@ -9,11 +17,17 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
         '@nuxt/devtools',
         '@sidebase/nuxt-auth',
-        'nuxt-lodash'
+        'nuxt-lodash',
+        //vuetify
+        async (options, nuxt) => {
+            nuxt.hooks.hook('vite:extendConfig', config => config.plugins.push(
+              vuetify()
+            ))
+        },
+
     ],
     css: [
         'vuetify/lib/styles/main.sass',
-        '@fortawesome/fontawesome-svg-core/styles.css',
         '~/assets/css/index.scss'
     ],
     build: {

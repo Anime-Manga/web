@@ -14,10 +14,6 @@
     "nuxt-lodash": "^2.4.1"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.2.1",
-    "@fortawesome/free-regular-svg-icons": "^6.4.0",
-    "@fortawesome/free-solid-svg-icons": "^6.2.1",
-    "@fortawesome/vue-fontawesome": "^3.0.2",
     "@pinia/nuxt": "^0.4.6",
     "h3": "^1.0.1",
     "lodash": "^4.17.21",
@@ -27,7 +23,8 @@
     "nuxt-icons": "^3.0.0",
     "pinia": "^2.0.28",
     "sass": "^1.56.1",
-    "vuetify": "^3.1.6",
+    "vite-plugin-vuetify": "^1.0.2",
+    "vuetify": "^3.1.13",
     "websocket": "^1.0.34"
   },
   "overrides": {
