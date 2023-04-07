@@ -6,7 +6,7 @@ COPY ["src/", "./"]
 
 COPY . .
 
-RUN npm install --omit=dev
+RUN npm install --production
 RUN npm run build
 
 EXPOSE 3000
