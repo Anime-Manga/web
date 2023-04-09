@@ -11,10 +11,10 @@
         <strong>NOT YET PROCESSED</strong>
       </template>
       <template v-else-if="item.stateDownload.toUpperCase() === 'DOWNLOADING'">
-        <strong>{{ this.item.percentualDownload }} %</strong>
+        <strong>{{ item.percentualDownload }} %</strong>
       </template>
       <template v-else>
-        <strong style="color: white">{{ this.item.stateDownload.toUpperCase() }}</strong>
+        <strong style="color: white">{{ item.stateDownload.toUpperCase() }}</strong>
       </template>
     </template>
   </v-progress-linear>
