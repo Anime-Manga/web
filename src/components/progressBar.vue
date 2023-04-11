@@ -1,7 +1,6 @@
 <template>
   <v-progress-linear
       v-model="item.percentualDownload"
-      :striped="item.percentualDownload < 100"
       :color="getStatus"
       height="25"
       striped
@@ -9,6 +8,9 @@
     <template v-slot:default="{ value }">
       <template v-if="isNil(item.stateDownload)">
         <strong>NOT YET PROCESSED</strong>
+      </template>
+      <template v-else-if="item.stateDownload.toUpperCase() === 'CONVERSIONING'">
+        <strong>CONVERSION {{ item.percentualDownload }}%</strong>
       </template>
       <template v-else-if="item.stateDownload.toUpperCase() === 'DOWNLOADING'">
         <strong>{{ item.percentualDownload }} %</strong>
@@ -37,7 +39,7 @@ const getStatus = computed(() => {
     case 'downloading':
       return 'primary';
     case 'conversioning':
-      return 'info';
+      return 'light-blue';
     case 'completed':
       return 'success';
     case 'failed':
