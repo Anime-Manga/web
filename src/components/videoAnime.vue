@@ -65,6 +65,8 @@
 </template>
 
 <script setup>
+import { fa } from 'vuetify/lib/iconsets/fa';
+
 const runtimeConfig = useRuntimeConfig();
 
 const route = useRoute();
@@ -91,7 +93,9 @@ const episodes = ref(null);
 
 onMounted(async () => {
   let vid = document.getElementById("my-video");
-  window.addEventListener("beforeunload", leaving);
+  window.addEventListener("beforeunload", async () => await leaving());
+  window.addEventListener("pagehide", async () => await leaving());
+  window.addEventListener("blur", async () => await leaving());
 
   if(!isNil(route.query.idroom))
     startCoreWs();
@@ -104,7 +108,9 @@ onMounted(async () => {
     
     if (isNil(route.query.idroom) && !isNil(progress.value)) {
       let time = (progress.value.hours * 3600) + (progress.value.minutes * 60) + progress.value.seconds;
+
       vid.currentTime = time;
+      vid.load();
     }
   }
 
@@ -160,6 +166,7 @@ const nextEpisode = computed(() => {
 watch(time, () => {
   var vid = document.getElementById("my-video");
   vid.currentTime = time.value
+  vid.load();
 })
 
 watch(pause, () => {
@@ -277,12 +284,12 @@ function startCoreWs() {
   });
 
   room.value.on('pause', (statePause) => {
-    sendMessage('updatePause', { pause: statePause, idRoom: idRoom.value })
+    sendMessage('updatePause', { pause: statePause, idRoom: idRoom.value, who_action: currentUser.value})
     console.log('request updatePause');
   });
 
   room.value.on('time', (stateTime) => {
-    sendMessage('updateTime', { time: stateTime, idRoom: idRoom.value })
+    sendMessage('updateTime', { time: stateTime, idRoom: idRoom.value, who_action: currentUser.value})
     console.log('request updatePause');
   });
 

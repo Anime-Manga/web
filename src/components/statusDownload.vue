@@ -63,7 +63,7 @@
                   <template v-if="media.stateDownload && media.stateDownload.toUpperCase() === 'COMPLETED'">
                     <template v-if="item.type === 'video'">
                       <div class="my-3">
-                        <NuxtLink :to="'/room?type=anime&episode='+media.id">
+                        <NuxtLink :to="`/room?type=anime&episode=${media.id}&nameCfg=${media.nameCfg}&name=${item.name_id}`">
                           <v-btn
                               color="primary"
                               block
@@ -79,7 +79,7 @@
                     </template>
                     <template v-else>
                       <div class="my-3">
-                        <NuxtLink :to="`/room?type=manga&chapter=${media.id}&manga=${item.name_id}`">
+                        <NuxtLink :to="`/room?type=manga&chapter=${media.id}&name=${item.name_id}&nameCfg=${media.nameCfg}`">
                           <v-btn
                               color="primary"
                               block
@@ -114,9 +114,6 @@ const error = ref(null)
 
 //lodash
 const {isNil} = useLodash();
-
-//api
-const {getStatus} = useApi();
 
 //props
 const props = defineProps({

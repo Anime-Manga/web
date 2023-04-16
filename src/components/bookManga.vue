@@ -310,6 +310,7 @@ async function saveStatusProgress(page = indexPage){
     }else
       progress.value.page = page;
 
+    progress.value.name = route.query.name;
     progress.value.nameChapter = data.value.chapterId;
     progress.value = await saveProgress('book', progress.value)
   }
