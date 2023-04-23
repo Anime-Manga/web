@@ -53,7 +53,8 @@ export default defineNuxtPlugin(nuxtApp => {
                 login: 'fa-solid fa-right-to-bracket',
                 logout: 'fa-solid fa-right-from-bracket',
                 saved: 'fa-solid fa-bookmark',
-                notSaved:'fa-regular fa-bookmark'
+                notSaved:'fa-regular fa-bookmark',
+                menu: 'fa-solid fa-bars'
             },
             sets: {
                 fa

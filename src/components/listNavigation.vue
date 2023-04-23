@@ -1,9 +1,24 @@
 <template>
+  <v-app-bar
+        color="primary"
+        density="compact"
+        collapse
+        elevation="0"
+        floating
+      >
+
+        <v-icon
+        class="ml-4"
+      @click="show = !show"
+    >
+      $menu
+    </v-icon>
+  </v-app-bar>
   <v-navigation-drawer
       expand-on-hover
       color="#363636"
       rail
-      permanent
+      v-model="show"
   >
     <v-list
         density="compact"
@@ -40,6 +55,7 @@ import {useStore} from "../store";
 
 //variables
 const select = ref();
+const show = ref(true);
 
 //store
 const store = useStore();

@@ -1,6 +1,5 @@
 <template>
   <div
-      id="main"
       class="fill-height"
       style="width: 100%"
   >

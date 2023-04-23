@@ -1,12 +1,7 @@
 <template>
-  <div
-      id="main"
-      class="fill-height"
-  >
-    <searchComponent
-        typeSearch="search-animesaturn"
-    />
-  </div>
+  <searchComponent
+      typeSearch="search-animesaturn"
+  />
 </template>
 
 <script setup>

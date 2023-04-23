@@ -166,7 +166,7 @@ watch(date, () => {
     {
       setTimeout(async () => {
         try{
-          contents.value = await getStatus(item.value.type, item.value.name_id);
+          contents.value = await getStatus(item.value.type, item.value.name_id, item.value.nameCfg);
         }catch(err){
           console.log(err);
         }finally{

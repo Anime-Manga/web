@@ -1,9 +1,4 @@
 <template>
-  <div
-      id="main"
-      class="fill-height"
-  >
-  </div>
 </template>
 
 <script>

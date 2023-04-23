@@ -1,12 +1,7 @@
 <template>
-  <div
-      id="main"
-      class="fill-height"
-  >
-    <searchComponent
-        typeSearch="search-watchlist"
-    />
-  </div>
+  <searchComponent
+      typeSearch="search-watchlist"
+  />
 </template>
 
 <script setup>

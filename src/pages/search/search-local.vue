@@ -1,12 +1,7 @@
 <template>
-  <div
-      id="main"
-      class="fill-height"
-  >
-    <searchComponent
-        typeSearch="local"
-    />
-  </div>
+  <searchComponent
+      typeSearch="local"
+  />
 </template>
 
 <script setup>

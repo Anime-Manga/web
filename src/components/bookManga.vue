@@ -5,14 +5,6 @@
     <div
         class="text-center d-flex flex-column fill-height justify-center align-center"
     >
-      <v-btn
-          style="color: white !important;"
-          color="info"
-          class="mt-1"
-          @click="close()"
-      >
-        Go to Home
-      </v-btn>
       <div id="my-manga">
         <template v-if="!modeList">
           <div class="d-flex flex-row align-center justify-center">
@@ -251,7 +243,7 @@ watch(done, () => {
     if (done.value >= (data.value.chapterPath.length - 1) && modeList.value)
     {
       loadingImage.value = false;
-      if(!isNil(progress) && progress.value.nameChapter === route.query.chapter)
+      if(!isNil(progress.value) && progress.value.nameChapter === route.query.chapter)
       {
         setTimeout(() => {
           const page = document.getElementById(`page-${progress.value.page}`);
@@ -512,7 +504,7 @@ function close() {
     background: rgba(0, 0, 0, 0.5);
     position: absolute;
     top: 0;
-    left: 0;
+    right: 0;
     z-index: 2;
     padding: 10px;
   }

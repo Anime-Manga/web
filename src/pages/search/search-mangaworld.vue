@@ -1,12 +1,7 @@
 <template>
-  <div
-      id="main"
-      class="fill-height"
-  >
-    <searchComponent
-        typeSearch="search-mangaworld"
-    />
-  </div>
+  <searchComponent
+      typeSearch="search-mangaworld"
+  />
 </template>
 
 <script setup>
