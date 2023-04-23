@@ -13,9 +13,10 @@ export default NuxtAuthHandler({
             name: 'Credentials',
             async authorize (credentials: any) {
                 try{
-                    let user = await $fetch(`${API_BASE}/auth/login`, {body:{username: credentials?.username, password: credentials?.password}, method: 'post'});
+                    await $fetch(`${API_BASE}/auth/login`, {body:{username: credentials?.username, password: credentials?.password}, method: 'post'});
                     return {
-                        name: user.username
+                        name: credentials?.username,
+                        password: credentials?.password
                     };
                 }catch(err){
                     console.log(err);
@@ -23,5 +24,18 @@ export default NuxtAuthHandler({
                 }
             }
         })
-    ]
+    ],
+    callbacks: {
+        jwt: async ({token, user}) => {
+          const isSignIn = user ? true : false;
+          if (isSignIn) {
+            token.password = user ? (user as any).password : undefined;
+            
+          }
+          return Promise.resolve(token);
+        },
+        session: async ({session, token}) => {            
+            return Promise.resolve(session);
+        },
+    },
 })
