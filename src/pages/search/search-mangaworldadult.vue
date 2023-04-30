@@ -1,6 +1,6 @@
 <template>
   <searchComponent
-      typeSearch="search-mangaworld-adult"
+      typeSearch="search-mangaworldadult"
   />
 </template>
 

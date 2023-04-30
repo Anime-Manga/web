@@ -122,6 +122,8 @@ const getPathImages = computed( () => {
       return "/images/logo_animesaturn.png";
     case "search-mangaworld":
       return "/images/MangaWorldLogo.svg";
+    case "search-mangaworldadult":
+      return "/images/MangaWorldAdultLogo.svg";
   }
 });
 
@@ -135,6 +137,7 @@ const getStyleBanner = computed(() => {
     case "search-animesaturn":
       return "width: 25%;";
     case "search-mangaworld":
+    case "search-mangaworldadult":
       return "width: 50%;";
   }
 });

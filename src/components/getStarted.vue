@@ -1,6 +1,7 @@
 <template>
     <div>
           <v-btn
+          v-if="!isNil(contents)"
             color="primary"
             block
             class="custom-btn"

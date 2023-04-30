@@ -72,6 +72,8 @@ function getIcon(id){
       return '$planet';
     case 'mangaworld':
       return '$book';
+    case 'mangaworldadult':
+      return '$bookSkull';
     default:
       return '';
   }
