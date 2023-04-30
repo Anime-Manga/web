@@ -39,22 +39,36 @@
           Current Episopde: {{ data.episodeId }}
         </div>
         <div class="d-flex flex-row justify-space-around flex-wrap mb-2">
-          <v-btn v-if="getPreviousEpisode" color="primary" class="text-decoration-none"
-            @click="navigateTo(`/room?type=anime&episode=${getPreviousEpisode}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)">
-            <v-icon class="mr-2">
-              $arrowLeft
-            </v-icon>
-            Previous chapter
-          </v-btn>
+          <NuxtLink
+            v-if="getPreviousEpisode"
+            class="text-decoration-none"
+            :to="`/room?type=anime&episode=${getPreviousEpisode}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`"
+          >
+              <v-btn
+                  color="primary"
+              >
+                <v-icon class="mr-2">
+                  $arrowLeft
+                </v-icon>
+                Previous chapter
+              </v-btn>
+          </NuxtLink>
 
-          <v-btn v-if="nextEpisode" color="secondary"
-            @click="navigateTo(`/room?type=anime&episode=${nextEpisode}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)"
-            class="text-decoration-none">
-            Next chapter
-            <v-icon class="ml-2">
-              $arrowRight
-            </v-icon>
-          </v-btn>
+          <NuxtLink
+            v-if="nextEpisode"
+            :to="`/room?type=anime&episode=${nextEpisode}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`"
+            @click="ignoreAlertRewriteProcess = true"
+            class="text-decoration-none"
+          >
+              <v-btn
+                  color="secondary"
+              >
+                Next chapter
+                <v-icon class="ml-2">
+                  $arrowRight
+                </v-icon>
+              </v-btn>
+          </NuxtLink>
         </div>
         <v-btn v-if="status === 'authenticated'" @click="saveStatusProgress()">
           Save Progress
@@ -62,11 +76,18 @@
       </div>
     </div>
   </div>
+  {{ activeModal }}
+  <component
+    :is="activeModal"
+    :actual="data?.episodeId"
+    :restore="progress?.nameEpisode"
+    type="anime"
+    @close="activeModal = ''"
+    @confirmResume="resume()"
+  />
 </template>
 
 <script setup>
-import { fa } from 'vuetify/lib/iconsets/fa';
-
 const runtimeConfig = useRuntimeConfig();
 
 const route = useRoute();
@@ -90,6 +111,11 @@ const pause = ref(null);
 const time = ref(0);
 const showMenu = ref(false);
 const episodes = ref(null);
+const notSaveProgress = ref(false);
+const ignoreAlertRewriteProcess = ref(false);
+
+//dialog
+const activeModal = ref("");
 
 onMounted(async () => {
   let vid = document.getElementById("my-video");
@@ -132,6 +158,11 @@ onMounted(async () => {
 onBeforeRouteLeave(async () => {
   stopWs();
   await saveStatusProgress();
+
+  
+  window.removeEventListener("beforeunload");
+  window.removeEventListener("pagehide");
+  window.removeEventListener("blur");
 })
 
 //computed
@@ -156,7 +187,7 @@ const nextEpisode = computed(() => {
 
   const index = episodes.value.findIndex(episode => episode.id === episodeId)
 
-  if (index <= episodes.value.length)
+  if ((index + 1) < episodes.value.length)
     return episodes.value[index + 1].id
   return null;
 });
@@ -187,6 +218,9 @@ watch(() => route.query.episode, async () => {
   await getProgressStatus();
   await getVideoEpisode();
 
+  //restore
+  notSaveProgress.value = false;
+
   console.log(startedWs, failedWs);
   if(getAdmin())
     room.value.emit('changeSource');
@@ -210,7 +244,7 @@ async function leaving() {
 }
 
 async function saveStatusProgress() {
-  if (status.value === 'authenticated') {
+  if (status.value === 'authenticated' && notSaveProgress.value === false) {
     let vid = document.getElementById("my-video");
     let currentSeconds = vid.currentTime;
     progress.value.hours = Math.floor(currentSeconds / 3600);
@@ -320,6 +354,15 @@ async function getVideoEpisode() {
 
   if (isNil(route.query.idroom) || getAdmin())
     episodes.value = await getStatus('video', route.query.name);
+  
+  if(!isNil(progress.value))
+  {
+    console.log(progress.value.nameEpisode, data.value.episodeId, ignoreAlertRewriteProcess.value);
+    if(progress.value.nameEpisode !== data.value.episodeId && ignoreAlertRewriteProcess.value === false)
+      activeModal.value = "rewriteProgressDialog";
+    else
+      ignoreAlertRewriteProcess.value = false;
+  }
 }
 
 async function getProgressStatus() {
@@ -338,6 +381,12 @@ async function getProgressStatus() {
       }
     }
   }
+}
+
+function resume(){
+  activeModal.value = '';
+  notSaveProgress.value = true;
+  router.push(`/room?type=anime&episode=${progress.value.nameEpisode}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)
 }
 
 function getAdmin(){

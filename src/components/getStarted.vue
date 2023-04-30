@@ -1,21 +1,29 @@
 <template>
     <div>
-        <template v-if="!isNil(foundProgress) && !isNil(foundMedia)">
           <v-btn
             color="primary"
             block
             class="custom-btn"
             @click="navigateTo(getPath())"
-            :disabled="disabled"
+            :disabled="disabled || isNil(foundProgress)"
           >
-            <template v-if="disabled">
-              Now is disabled because {{ nameBtn }} is still downloading
+          <div style="min-width: 100px;">
+            <template v-if="isNil(foundMedia)">
+              <v-progress-circular
+                indeterminate
+              />
+            </template>
+            <template v-else-if="isNil(foundProgress)">
+              You aren't logged
+            </template>
+            <template v-else-if="disabled">
+              <span>Now is disabled because {{ nameBtn }} is still downloading</span>
             </template>
             <template v-else>
               {{ foundProgress? 'resume' : 'start' }} by <b>{{ nameBtn }}</b>
             </template>
+          </div>
           </v-btn>
-        </template>
     </div>
 </template>
 

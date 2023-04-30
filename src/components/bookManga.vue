@@ -131,6 +131,7 @@
             </NuxtLink>
             <NuxtLink
                 v-if="nextChapter"
+                @click="ignoreAlertRewriteProcess = true"
                 :to="`/room?type=manga&chapter=${nextChapter}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`"
                 class="text-decoration-none"
             >
@@ -168,6 +169,14 @@
       </div>
     </div>
   </div>
+  <component
+    :is="activeModal"
+    :actual="data?.chapterId"
+    :restore="progress?.nameChapter"
+    type="manga"
+    @close="activeModal = ''"
+    @confirmResume="resume()"
+  />
 </template>
 
 <script setup>
@@ -189,6 +198,11 @@ const showMenu = ref(false)
 const modeList = ref(false)
 const done = ref(0)
 const progress = ref(null);
+const notSaveProgress = ref(false);
+const ignoreAlertRewriteProcess = ref(false);
+
+//dialog
+const activeModal = ref("");
 
 //refs
 const imgBook = ref(null);
@@ -276,6 +290,9 @@ watch(route, async () => {
     loadingImage.value = true;
     load();
   }
+
+  //restore
+  notSaveProgress.value = false;
 })
   
 
@@ -285,7 +302,7 @@ async function leaving(){
 }
 
 async function saveStatusProgress(page = indexPage){
-  if(status.value === 'authenticated')
+  if(status.value === 'authenticated' && notSaveProgress.value === false)
   {
     if(modeList.value)
     {
@@ -430,6 +447,20 @@ async function load() {
   }catch(err){
     console.log(err);
   }
+  
+  if(!isNil(progress.value))
+  {
+    if(progress.value.nameChapter !== data.value.chapterId && ignoreAlertRewriteProcess.value === false)
+      activeModal.value = "rewriteProgressDialog";
+    else
+      ignoreAlertRewriteProcess.value = false;
+  }
+}
+
+function resume(){
+  activeModal.value = '';
+  notSaveProgress.value = true;
+  router.push(`/room?type=manga&chapter=${progress.value.nameChapter}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)
 }
 
 function close() {
