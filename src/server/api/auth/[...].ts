@@ -3,7 +3,7 @@ import { NuxtAuthHandler } from "#auth";
 const API_BASE = process.env.API_BASE_URL || 'http://localhost:5000';
 
 export default NuxtAuthHandler({
-    secret: process.env.NUXT_SECRET,
+    secret: process.env.NUXT_SECRET || 'animemanga',
     pages: {
         // Change the default behavior to use `/login` as the path for the sign-in page
         signIn: '/auth/login'
