@@ -193,11 +193,9 @@ const nextEpisode = computed(() => {
 });
 
 //watch
-
 watch(time, () => {
   var vid = document.getElementById("my-video");
   vid.currentTime = time.value
-  vid.load();
 })
 
 watch(pause, () => {
@@ -318,12 +316,12 @@ function startCoreWs() {
   });
 
   room.value.on('pause', (statePause) => {
-    sendMessage('updatePause', { pause: statePause, idRoom: idRoom.value, who_action: currentUser.value})
+    sendMessage('updatePause', { pause: statePause, idRoom: idRoom.value})
     console.log('request updatePause');
   });
 
   room.value.on('time', (stateTime) => {
-    sendMessage('updateTime', { time: stateTime, idRoom: idRoom.value, who_action: currentUser.value})
+    sendMessage('updateTime', { time: stateTime, idRoom: idRoom.value})
     console.log('request updatePause');
   });
 
