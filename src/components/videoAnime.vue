@@ -76,7 +76,6 @@
       </div>
     </div>
   </div>
-  {{ activeModal }}
   <component
     :is="activeModal"
     :actual="data?.episodeId"
@@ -158,11 +157,12 @@ onMounted(async () => {
 onBeforeRouteLeave(async () => {
   stopWs();
   await saveStatusProgress();
+})
 
-  
-  window.removeEventListener("beforeunload");
-  window.removeEventListener("pagehide");
-  window.removeEventListener("blur");
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", async () => await leaving());
+  window.removeEventListener("pagehide", async () => await leaving());
+  window.removeEventListener("blur", async () => await leaving());
 })
 
 //computed
