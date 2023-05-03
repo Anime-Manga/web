@@ -4,11 +4,10 @@
       :key="index"
   >
     <div
-        v-if="check(index)"
+      class="card-description"
+        v-if="check(index) && !isNil(item[index])"
     >
-      <h6>{{ index }}:</h6>
-      <p class="card-text">{{ item[index] }}</p>
-      <hr>
+      <span class="head">{{ index }}:</span><span>{{ item[index] }}</span>
     </div>
   </template>
   <template v-if="!isNil(item.urlPageDownload)">
@@ -28,8 +27,6 @@
 </template>
 
 <script setup>
-const {isNil} = useLodash()
-
 const props = defineProps({
   item:{
     type: Object,
@@ -52,6 +49,7 @@ function check(index) {
     case 'cover':
     case 'url_page':
     case 'watchList':
+    case 'name_id':
       return false;
     default:
       return true;
@@ -59,6 +57,24 @@ function check(index) {
 }
 </script>
 <style lang="scss" scoped>
+.card-description{
+  border: #90cbd3 3px solid;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  padding: 0 5px;
+  
+  .head{
+    position: relative;
+    text-transform: uppercase;
+    font-size: small;
+    background-color: #90cbd3;
+    color: white;
+    padding: 5px;
+    left: -5px;
+    border-top-left-radius: 5px;
+  }
+}
+
 .btn-link {
   width: 100%;
   background-color: #6c757d;

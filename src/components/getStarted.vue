@@ -1,31 +1,45 @@
 <template>
-    <div>
-          <v-btn
-          v-if="!isNil(contents)"
+  <v-timeline 
+    v-if="!isNil(contents)"
+    side="end"
+    align="start" 
+    id="timeline-download"
+  >
+    <v-timeline-item
+      v-for="content in contents"
+      :dot-color="!isNil(foundMedia) && content.id < foundMedia.id? '#90cbd3' : getState(content.stateDownload)"
+      :icon="!isNil(foundMedia) && content.id < foundMedia.id? '$check' : ''"
+      icon-color="white"
+    >
+      <template v-slot:opposite v-if="!isNil(foundMedia) && content.id === foundMedia.id">
+        <v-btn
             color="primary"
             block
+            width="80"
             class="custom-btn"
             @click="navigateTo(getPath())"
             :disabled="disabled || isNil(foundProgress)"
           >
           <div style="min-width: 100px;">
-            <template v-if="isNil(foundMedia)">
-              <v-progress-circular
-                indeterminate
-              />
-            </template>
-            <template v-else-if="isNil(foundProgress)">
+            <template v-if="isNil(foundProgress)">
               You aren't logged
             </template>
             <template v-else-if="disabled">
-              <span>Now is disabled because {{ nameBtn }} is still downloading</span>
+              <span>It is still downloading</span>
             </template>
             <template v-else>
-              {{ foundProgress? 'resume' : 'start' }} by <b>{{ nameBtn }}</b>
+              {{ foundProgress? 'resume' : 'start' }}
             </template>
           </div>
-          </v-btn>
-    </div>
+        </v-btn>
+      </template>
+      <span
+        :id="content.id"
+      >
+        {{ content.id }}
+      </span>
+    </v-timeline-item>
+  </v-timeline>
 </template>
 
 <script setup>
@@ -77,6 +91,18 @@ watch(contents, async () => {
   }
 })
 
+watch(foundMedia, (newVal, oldVal) => {
+
+  if(isNil(oldVal) || newVal.id !== oldVal.id){
+    var contentId = document.getElementById(foundMedia.value.id);
+
+    contentId.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
+}, {deep: true})
+
 async function setProgress(){
   if(status.value === 'authenticated' && isNil(item.value.urlPageDownload))
   {
@@ -111,9 +137,27 @@ function setName(){
       nameBtn.value = `${foundMedia.value.nameManga} Volume:${foundMedia.value.currentVolume} Chapter:${foundMedia.value.currentChapter}`;
     }
 }
+
+function getState(state){
+  switch(state){
+    case 'completed':
+      return 'success';
+    case 'pending':
+      return 'warning';
+    case 'failed':
+      return 'error';
+    default:
+      return 'info';
+  }
+}
 </script>
 
 <style lang="scss" scoped>
+#timeline-download{
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 .custom-btn{
   color: white !important;
 }

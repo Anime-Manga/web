@@ -107,7 +107,7 @@
         >
         </v-img>
         <div class="card-title">
-          {{ item.name }}
+          {{ item.name ?? item.name_id }}
         </div>
       </v-card-title>
       <v-card-text>
