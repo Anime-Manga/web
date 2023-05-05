@@ -56,7 +56,7 @@ import {useStore} from "../store";
 
 //variables
 const select = ref();
-const show = ref(true);
+const show = ref(false);
 
 //store
 const store = useStore();
