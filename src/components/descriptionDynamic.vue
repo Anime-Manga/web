@@ -70,8 +70,10 @@ function check(index) {
     background-color: #90cbd3;
     color: white;
     padding: 5px;
-    left: -5px;
-    border-top-left-radius: 5px;
+    top: -1;
+    left: -6px;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 1px;
   }
 }
 

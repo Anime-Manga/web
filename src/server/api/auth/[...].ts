@@ -1,9 +1,11 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { NuxtAuthHandler } from "#auth";
-const API_BASE = process.env.API_BASE_URL || 'http://localhost:5000';
+
+const runtimeConfig = useRuntimeConfig();
+const API_BASE = runtimeConfig.apiBase;
 
 export default NuxtAuthHandler({
-    secret: process.env.NUXT_SECRET || 'animemanga',
+    secret: runtimeConfig.secret,
     pages: {
         // Change the default behavior to use `/login` as the path for the sign-in page
         signIn: '/auth/login'

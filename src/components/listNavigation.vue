@@ -18,6 +18,7 @@
       expand-on-hover
       color="#363636"
       rail
+      temporary
       v-model="show"
   >
     <v-list

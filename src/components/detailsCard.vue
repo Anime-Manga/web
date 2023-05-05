@@ -115,6 +115,7 @@
           :item="item"
         />
         <getStarted
+          v-if="status === 'authenticated'"
           class="mt-2"
           :item="item"
           :contents="contents"
@@ -133,7 +134,7 @@ import {useStore} from "../store";
 const store = useStore();
 
 //user
-const {data: account} = useSession();
+const {data: account, status} = useSession();
 
 //api
 const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus} = useApi();
@@ -244,21 +245,23 @@ async function setWatchList(state){
 
 <style lang="scss" scoped>
 .hide-img {
-  -webkit-filter: blur(5px);
-  -moz-filter: blur(5px);
-  -o-filter: blur(5px);
-  -ms-filter: blur(5px);
+  -webkit-filter: blur(1.5px);
+  -moz-filter: blur(1.5px);
+  -o-filter: blur(1.5px);
+  -ms-filter: blur(1.5px);
 }
 
 .card-title {
   overflow-wrap: break-word !important;
   position: relative;
+  padding: 2px 5px;
   width: calc(100% - 30px);
   top: -65px;
   left: 15px;
   color: white;
   font-weight: bold;
   font-size: 30px;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgb(0, 0, 0, 0.7);
+  box-shadow: 0px 0px 5px 7px rgba(0, 0, 0, 0.7);
 }
 </style>

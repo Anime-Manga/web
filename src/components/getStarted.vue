@@ -8,11 +8,25 @@
     <v-timeline-item
       v-for="content in contents"
       :dot-color="!isNil(foundMedia) && content.id < foundMedia.id? '#90cbd3' : getState(content.stateDownload)"
-      :icon="!isNil(foundMedia) && content.id < foundMedia.id? '$check' : ''"
-      icon-color="white"
     >
+      <template v-slot:icon>
+        <v-icon
+          color="white"
+          v-if="content.stateDownload === 'completed'"
+        >
+          {{ !isNil(foundMedia) && content.id < foundMedia.id? '$check' :  ''}}
+        </v-icon>
+
+        <span
+          v-if="content.stateDownload === 'downloading' || content.stateDownload === 'conversioning'"
+          style="color: white;"
+        >
+          {{ content.percentualDownload }}
+        </span>
+      </template>
       <template v-slot:opposite v-if="!isNil(foundMedia) && content.id === foundMedia.id">
         <v-btn
+            elevation="0"
             color="primary"
             block
             width="80"
@@ -23,9 +37,6 @@
           <div style="min-width: 100px;">
             <template v-if="isNil(foundProgress)">
               You aren't logged
-            </template>
-            <template v-else-if="disabled">
-              <span>It is still downloading</span>
             </template>
             <template v-else>
               {{ foundProgress? 'resume' : 'start' }}
@@ -140,14 +151,20 @@ function setName(){
 
 function getState(state){
   switch(state){
+    case 'downloading':
+      return 'primary';
+    case 'conversioning':
+      return 'light-blue';
     case 'completed':
       return 'success';
-    case 'pending':
-      return 'warning';
     case 'failed':
       return 'error';
+    case 'wait conversion':
+      return 'grey';
+    case 'pending':
+      return 'warning';
     default:
-      return 'info';
+      return 'grey';
   }
 }
 </script>
