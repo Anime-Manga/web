@@ -77,7 +77,7 @@ const {isNil} = useLodash();
 const {
   signOut,
   data: account
-} = useSession()
+} = useAuth()
 
 const router = useRouter();
 

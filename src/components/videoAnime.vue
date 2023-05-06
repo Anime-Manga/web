@@ -93,7 +93,7 @@ const route = useRoute();
 const router = useRouter();
 
 const { getRegister, getStatus, getProgress, saveProgress } = useApi();
-const { status, data: account } = useSession();
+const { status, data: account } = useAuth();
 
 const { ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useWs();
 

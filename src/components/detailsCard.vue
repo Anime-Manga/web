@@ -134,7 +134,7 @@ import {useStore} from "../store";
 const store = useStore();
 
 //user
-const {data: account, status} = useSession();
+const {data: account, status} = useAuth();
 
 //api
 const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus} = useApi();

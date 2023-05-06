@@ -1,6 +1,6 @@
 export default defineNuxtPlugin(async (nuxtApp) => {
   if (process.client) {
-    const { status, signIn, signOut } = useSession();
+    const { status, signIn, signOut } = useAuth();
 
     if(status.value == "authenticated")
     {

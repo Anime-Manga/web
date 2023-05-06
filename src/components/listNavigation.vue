@@ -51,7 +51,7 @@
 <script setup>
 const {
   status
-} = useSession()
+} = useAuth()
 import {useStore} from "../store";
 
 //variables

@@ -185,7 +185,7 @@ import _ from 'lodash'
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
-const { status, data: account } = useSession();
+const { status, data: account } = useAuth();
 const {getRegister, getStatus, saveProgress, getProgress} = useApi();
 
 //env

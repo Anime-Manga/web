@@ -50,7 +50,7 @@ import _ from 'lodash'
 definePageMeta({auth: false})
 const {
   signIn
-} = useSession()
+} = useAuth()
 
 const router = useRouter();
 

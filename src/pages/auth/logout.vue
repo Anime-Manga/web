@@ -5,7 +5,7 @@
 <script setup>
 const {
   signOut
-} = useSession()
+} = useAuth()
 
 await signOut({redirect: false});
 

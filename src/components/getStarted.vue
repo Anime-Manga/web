@@ -66,7 +66,7 @@ const props = defineProps({
 const {item, contents} = toRefs(props);
 
 //user
-const {data: account, status} = useSession();
+const {data: account, status} = useAuth();
 
 //api
 const {getProgress} = useApi();
