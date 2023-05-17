@@ -52,7 +52,7 @@
 const {
   status
 } = useAuth()
-import {useStore} from "../store";
+import {useStore} from "~/store";
 
 //variables
 const select = ref();

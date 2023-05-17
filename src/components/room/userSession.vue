@@ -1,10 +1,9 @@
 <template>
   <v-card
-      width="60"
       :color="this.background"
   >
     <v-card-text>
-      <div style="margin: auto; padding: 5px;">
+      <div class="d-flex flex-column align-center  fill-height">
         <v-icon v-if="root">$crown</v-icon>
         <v-icon>$user</v-icon>
       </div>

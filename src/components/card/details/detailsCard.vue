@@ -129,7 +129,7 @@
   </v-dialog>
 </template>
 <script setup>
-import {useStore} from "../store";
+import {useStore} from "~/store";
 //store
 const store = useStore();
 

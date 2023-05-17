@@ -8,12 +8,13 @@
       </video>
     </div>
     <div class="ma-2">
-      <span v-if="!isNil(idRoom)" class="link-share">
-        <v-icon class="mr-3">
-          $share
-        </v-icon>
-        {{ `${hostWeb}/room?idroom=${idRoom}&type=anime&name=${route.query.name}` }}
-      </span>
+      <toolTips
+        v-if="!isNil(idRoom)"
+        preicon="$share"
+        label="Share"
+        message="Done!"
+        :action="copyLink()"
+      />
     </div>
 
     <div class="d-flex justify-center" style="width: 100%">
@@ -22,11 +23,11 @@
           Create room
         </v-btn>
       </template>
-      <template v-else>
+      <div v-else class="d-flex flex-wrap justify-center align-center">
         <div v-for="(user, index) in users" class="ma-3">
           <userSession :nickname="user.nickname" :root="index === 0" :currentUser="currentUser" />
         </div>
-      </template>
+      </div>
     </div>
     <div class="menu" v-if="!isNil(startedWs) && (startedWs === true &&  !isNil(users) && users.length > 0 && users[0].nickname === currentUser || startedWs === false)">
       <div class="d-flex justify-center">
@@ -392,17 +393,15 @@ function getAdmin(){
     return true;
   return false;
 }
+
+function copyLink(){
+  navigator.clipboard.writeText(`${hostWeb.value}/room?idroom=${idRoom.value}&type=anime&name=${route.query.name}`);
+}
 </script>
 
 <style lang="scss" scoped>
 .contain-video {
   width: 70%;
-}
-
-.link-share {
-  background-color: white;
-  padding: 10px;
-  border-radius: 5px;
 }
 
 #my-video {

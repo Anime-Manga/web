@@ -70,7 +70,7 @@
 <script setup>
 //variables
 import {watch} from "vue";
-import {useStore} from "../store";
+import {useStore} from "~/store";
 import _ from 'lodash'
 const {isNil} = useLodash();
 

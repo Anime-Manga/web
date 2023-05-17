@@ -1,10 +1,10 @@
 <template>
-<v-alert
-  :type="type"
-  :icon="getIcon"
->
-  {{text}}
-</v-alert>
+  <v-alert
+    :type="type"
+    :icon="getIcon"
+  >
+    {{text}}
+  </v-alert>
 </template>
 
 <script>
