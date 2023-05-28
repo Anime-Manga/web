@@ -2,8 +2,16 @@
 Questo progetto verrà utilizzato per gli utenti che vorranno scaricare anime e/o manga.
 Hanno la possibilità di vedere l'anime con gli amici in tempo reale.
 
-### Expose Ports:
-- 3000 tcp
+| Expose ports | Protocol |
+| ------ | ------ |
+| 3000 | TCP |
+
+### Dependencies
+| Services | Required |
+| ------ | ------ |
+| Api | ✅  |
+| Ftp | ✅  |
+| Room server | ⛔ |
 
 ### Variabili globali richiesti:
 ```sh
