@@ -49,6 +49,7 @@ export default defineNuxtConfig({
     },
     auth: {
         origin: process.env.ORIGIN || "http://localhost:3000",
-        enableGlobalAppMiddleware: true
+        enableGlobalAppMiddleware: true,
+        addDefaultCallbackUrl: false
     }
 })
