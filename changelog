@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Released]
+## [2.0.0] - 28-05-2023
+### Add
+- Account for tracer of book/video
+- New manga for adult
+- All cards set icon for set if video or book
+- Notify other users if change status or source of the video
+
+### Changed
+- Now user must click create room for share video
+- Episode/Chapter is grouped by number
+- List menu now is possible hide/show
+
+### Fixed
+- general GUI
+
+
 ## [1.0.2] - 26-12-2022
 ### Add
 - Read page or list

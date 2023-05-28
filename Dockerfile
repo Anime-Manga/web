@@ -1,12 +1,12 @@
-FROM node:16.18
+FROM node:18-alpine
 
 WORKDIR /app
 
-COPY ["src/", "./"]
+COPY ["src/", "./src"]
 
 COPY . .
 
-RUN npm install
-RUN npm run build
+RUN apk add --update bash && cd ./src && npm install && npm run build && cd .. && mv ./src/.output ./.output && rm -r ./src
 
 EXPOSE 3000
+ENTRYPOINT ["/bin/bash", "-c", "node .output/server/index.mjs"]

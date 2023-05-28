@@ -1,18 +1,9 @@
 <template>
-  <div
-      id="main"
-      class="fill-height"
-  >
-    <searchComponent />
-  </div>
 </template>
 
 <script>
-import searchComponent from "../component/searchComponent";
+definePageMeta({ auth: false })
 export default {
-  name: "index",
-  components:{
-    searchComponent
-  },
+  name: "index"
 }
 </script>
