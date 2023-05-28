@@ -56,7 +56,8 @@ export default defineNuxtPlugin(nuxtApp => {
                 notSaved:'fa-regular fa-bookmark',
                 menu: 'fa-solid fa-bars',
                 bookSkull: 'fa-solid fa-book-skull',
-                check: 'fa-solid fa-check'
+                check: 'fa-solid fa-check',
+                info: 'fa-solid fa-circle-info',
             },
             sets: {
                 fa

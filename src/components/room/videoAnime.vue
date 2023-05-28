@@ -85,9 +85,14 @@
     @close="activeModal = ''"
     @confirmResume="resume()"
   />
+  <notify />
 </template>
 
 <script setup>
+import { get } from "lodash";
+import {useStore} from "~/store";
+const store = useStore();
+
 const runtimeConfig = useRuntimeConfig();
 
 const route = useRoute();
@@ -101,13 +106,15 @@ const { ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useW
 const hostHTTP = ref(runtimeConfig.public.httpBase);
 const hostWeb = ref(runtimeConfig.public.webBase);
 const basePath = ref(runtimeConfig.public.basePath);
+
 const progress = ref(null);
 const data = ref(null);
 const idRoom = ref(null);
 const root = ref(null);
 const currentUser = ref(null);
 const users = ref(null);
-const pause = ref(null);
+const pause = ref(true);
+const human = ref(true);
 const time = ref(0);
 const showMenu = ref(false);
 const episodes = ref(null);
@@ -147,10 +154,23 @@ onMounted(async () => {
       room.value.emit('time', vid.currentTime);
   });
   vid.addEventListener("pause", () => {
+    if(human.value === false){
+      human.value = true;
+      console.log('pausa ma non invio nulla');
+      return;
+    }
+    
     room.value.emit('pause', true);
+      console.log('pausa e invio');
   });
   vid.addEventListener("playing", () => {
-    console.log(progress.value);
+    if(human.value === false){
+      human.value = true;
+      console.log('playing ma non invio nulla');
+      return;
+    }
+    
+    console.log('playing e invio');
     room.value.emit('pause', false);
   });
 })
@@ -197,20 +217,6 @@ const nextEpisode = computed(() => {
 watch(time, () => {
   var vid = document.getElementById("my-video");
   vid.currentTime = time.value
-})
-
-watch(pause, () => {
-  let vid = document.getElementById("my-video");
-  if (pause.value === true) {
-    vid.pause();
-  } else if (pause.value === false) {
-    try {
-      vid.play();
-    } catch {
-      vid.muted = true;
-      vid.play();
-    }
-  }
 })
 
 watch(() => route.query.episode, async () => {
@@ -267,11 +273,30 @@ function startCoreWs() {
     if (data.action === 'registration') {
       root.value = data.nickname
     } else if (data.action === 'UpdateRoom') {
-      idRoom.value = data.room.id_room
+
+      //notify
+      if(!isEmpty(data.message)){
+        let message = 'unknow';
+        if(data.message.type === 'updatePause')
+          message = `${data.message.nickname} has set ${data.message.pause? 'paused' : 'started'} video`;
+        else if(data.message.type === 'changeSource')
+          message = `${data.message.nickname} has change episode`;
+
+        store.addNotify({
+          message
+        })
+      }
+
+      //update info general
+      if(isNil(idRoom.value))
+        idRoom.value = data.room.id_room
+      
       users.value = data.room.clients
       time.value = data.room.t
-      pause.value = data.room.pause
+      
+      setPause(data.room.pause);
 
+      
       if(isNil(episodes.value) && users.value[0].nickname === currentUser.value)
         getVideoEpisode();
 
@@ -283,7 +308,6 @@ function startCoreWs() {
         })
       }
     } else if (data.action === 'loadVideo') {
-      idRoom.value = data.id
       root.value = data.nickname
 
       router.push({
@@ -296,7 +320,6 @@ function startCoreWs() {
   });
 
   room.value.on('checkRoom', () => {
-    console.log('check')
     if (route.query.idroom == null)
       room.value.emit('createRoom');
     else
@@ -317,13 +340,13 @@ function startCoreWs() {
   });
 
   room.value.on('pause', (statePause) => {
-    sendMessage('updatePause', { pause: statePause, idRoom: idRoom.value})
+    sendMessage('updatePause', { pause: statePause, idRoom: idRoom.value, nickname: currentUser.value})
     console.log('request updatePause');
   });
 
   room.value.on('time', (stateTime) => {
     sendMessage('updateTime', { time: stateTime, idRoom: idRoom.value})
-    console.log('request updatePause');
+    console.log('request updateTime');
   });
 
   room.value.on('currentTime', () => {
@@ -334,14 +357,31 @@ function startCoreWs() {
 
   room.value.on('changeSource', () => {
     const data = { episode: route.query.episode, idRoom: idRoom.value };
-    ws.value.send(JSON.stringify({ action: 'changeSource', data }))
+    ws.value.send(JSON.stringify({ action: 'changeSource', data, nickname: currentUser.value }))
     console.log('request change source');
   });
-
 
   startWs();
 }
 
+function setPause(pause){
+  let vid = document.getElementById("my-video");
+  
+  if (pause === true && vid.paused === false) {
+    human.value = false;
+    console.log('pausa!');
+    vid.pause();
+  } else if(pause === false && vid.paused === true){
+    human.value = false;
+    console.log('riprendi!');
+    try {
+      vid.play();
+    } catch {
+      vid.muted = true;
+      vid.play();
+    }
+  }
+}
 function sendMessage(setAction, data) {
   console.log(ws.value);
   ws.value.send(JSON.stringify({ action: setAction, data }))

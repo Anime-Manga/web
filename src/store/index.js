@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
+import { DateTime } from 'luxon';
 import _  from "lodash";
 
 export const useStore = defineStore('store', {
     state: () => ({
         currentSelectSearch:null,
-        schemas: []
+        schemas: [],
+        notifications:[]
     }),
     actions: {
         setSchemas(schemas){
@@ -15,6 +17,13 @@ export const useStore = defineStore('store', {
                 this.currentSelectSearch = null;
             else
                 this.currentSelectSearch = id;
+        },
+        addNotify(notify){
+            notify.id = DateTime.now().toMillis();
+            this.notifications.push(notify);
+        },
+        removeNotify(id){
+            this.notifications = useFilter(this.notifications, (notify) => notify.id !== id);
         }
     },
     getters: {
@@ -37,6 +46,9 @@ export const useStore = defineStore('store', {
                 }
             }
             return null;
+        },
+        getNotifications(state){
+            return state.notifications;
         }
     },
 })
