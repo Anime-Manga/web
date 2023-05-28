@@ -89,7 +89,6 @@
 </template>
 
 <script setup>
-import { get } from "lodash";
 import {useStore} from "~/store";
 const store = useStore();
 
@@ -435,7 +434,12 @@ function getAdmin(){
 }
 
 function copyLink(){
-  navigator.clipboard.writeText(`${hostWeb.value}/room?idroom=${idRoom.value}&type=anime&name=${route.query.name}`);
+  try{
+    navigator.clipboard.writeText(`${hostWeb.value}/room?idroom=${idRoom.value}&type=anime&name=${route.query.name}`);
+  }catch(err){
+    console.warn(err);
+    console.log(`Copy by here please: ${hostWeb.value}/room?idroom=${idRoom.value}&type=anime&name=${route.query.name}`);
+  }
 }
 </script>
 
