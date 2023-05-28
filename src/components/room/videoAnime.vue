@@ -355,8 +355,8 @@ function startCoreWs() {
   });
 
   room.value.on('changeSource', () => {
-    const data = { episode: route.query.episode, idRoom: idRoom.value };
-    ws.value.send(JSON.stringify({ action: 'changeSource', data, nickname: currentUser.value }))
+    const data = { episode: route.query.episode, idRoom: idRoom.value, nickname: currentUser.value };
+    ws.value.send(JSON.stringify({ action: 'changeSource', data}))
     console.log('request change source');
   });
 
