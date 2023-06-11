@@ -78,7 +78,7 @@
               </v-icon>
             </template>
           </v-btn>
-          <template v-if="!isNil(account?.user) || !isNil(item.watchList)">
+          <template v-if="!isNil(store.getUser) || !isNil(item.watchList)">
             <v-btn
                 color="info ml-1"
                 @click="setWatchList(item.watchList)"
@@ -115,7 +115,7 @@
           :item="item"
         />
         <getStarted
-          v-if="status === 'authenticated'"
+          v-if="!isNil(store.getUser)"
           class="mt-2"
           :item="item"
           :contents="contents"
@@ -129,12 +129,8 @@
   </v-dialog>
 </template>
 <script setup>
-import {useStore} from "~/store";
 //store
 const store = useStore();
-
-//user
-const {data: account, status} = useAuth();
 
 //api
 const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus} = useApi();
@@ -231,7 +227,7 @@ function close(){
 }
 
 async function setWatchList(state){
-  let username = account.value.user.name;
+  let username = store.getUser?.username;
   try {
     if(state === true)
       await removeWatchList(username, item.value.name_id, item.value.nameCfg);

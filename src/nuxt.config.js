@@ -18,7 +18,6 @@ export default defineNuxtConfig({
         'nuxt-icons',
         '@pinia/nuxt',
         '@nuxt/devtools',
-        '@sidebase/nuxt-auth',
         'nuxt-lodash',
         //vuetify
         async (options, nuxt) => {
@@ -47,8 +46,12 @@ export default defineNuxtConfig({
         }
         
     },
-    auth: {
-        origin: process.env.ORIGIN || "http://localhost:3000",
-        enableGlobalAppMiddleware: true
-    }
+    imports: {
+      dirs: ['stores'],
+    },  
+    pinia: {
+      autoImports: [
+        'defineStore'
+      ],
+    },
 })

@@ -6,7 +6,8 @@ export const useStore = defineStore('store', {
     state: () => ({
         currentSelectSearch:null,
         schemas: [],
-        notifications:[]
+        notifications:[],
+        user: null
     }),
     actions: {
         setSchemas(schemas){
@@ -24,6 +25,9 @@ export const useStore = defineStore('store', {
         },
         removeNotify(id){
             this.notifications = useFilter(this.notifications, (notify) => notify.id !== id);
+        },
+        setUser(data){
+            this.user = data;
         }
     },
     getters: {
@@ -49,6 +53,9 @@ export const useStore = defineStore('store', {
         },
         getNotifications(state){
             return state.notifications;
+        },
+        getUser(state){
+            return state.user;
         }
     },
 })

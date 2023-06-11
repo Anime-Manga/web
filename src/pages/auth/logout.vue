@@ -3,11 +3,10 @@
 </template>
 
 <script setup>
-const {
-  signOut
-} = useAuth()
+const { deleteCookie } = useAuth()
+const store = useStore();
 
-await signOut({redirect: false});
-
+deleteCookie();
+store.setUser(null);
 navigateTo('/')
 </script>

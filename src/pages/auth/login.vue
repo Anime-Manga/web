@@ -14,7 +14,7 @@
           variant="outlined"
           v-model="username"
           label="Username"
-          @keydown.enter="login()"
+          @keydown.enter="loginAccount()"
       />
       <v-text-field
           density="compact"
@@ -25,13 +25,13 @@
           :append-inner-icon="show? '$show' : '$hide'"
           @click:appendInner="show = !show"
           label="Password"
-          @keydown.enter="login()"
+          @keydown.enter="loginAccount()"
       />
       <v-btn
           block
           class="mb-3"
           color="primary"
-          @click="login()"
+          @click="loginAccount()"
       >
         Login
       </v-btn>
@@ -47,24 +47,26 @@
 </template>
 <script setup>
 import _ from 'lodash'
-definePageMeta({auth: false})
-const {
-  signIn
-} = useAuth()
-
-const router = useRouter();
+const { createCookie } = useAuth()
+const { login } = useApi();
+const store = useStore();
 
 const username = ref(null);
 const password = ref(null);
 const show = ref(false);
 const failedLogin = ref(false);
 
-async function login() {
-  let {error} = await signIn('credentials', {username: username.value, password: password.value, redirect: false});
-  if (!_.isNil(error))
+async function loginAccount() {
+  failedLogin.value = false;
+
+  try{
+    const data = await login({username: username.value, password: password.value});
+    createCookie(data);
+    store.setUser(data);
+    navigateTo('/');
+  }catch{
     failedLogin.value = true;
-  else
-    navigateTo('/')
+  }
 }
 </script>
 

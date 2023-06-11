@@ -110,6 +110,11 @@ export default function useApi(){
 
 
     //account
+    async function login(body){
+        let result = await $fetch(`/api/account/login`, {body, method: 'post', timeout: TIMEOUT});
+        return parse(result);
+    }
+
     async function getRegister(type, id){
         let result;
 
@@ -152,6 +157,7 @@ export default function useApi(){
         addWatchList,
         removeWatchList,
         getProgress,
-        saveProgress
+        saveProgress,
+        login
     }
 }
