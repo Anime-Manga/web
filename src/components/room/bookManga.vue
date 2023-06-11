@@ -217,10 +217,16 @@ onMounted(() => {
   checkDownload();
 
   window.addEventListener("beforeunload", leaving);
+  window.addEventListener("pagehide", leaving);
+  window.addEventListener("blur", leaving);
 })
 
 onBeforeRouteLeave(async () => {
   await saveStatusProgress();
+
+  window.removeEventListener("beforeunload", leaving);
+  window.removeEventListener("pagehide", leaving);
+  window.removeEventListener("blur", leaving);
 })
 
 //computed

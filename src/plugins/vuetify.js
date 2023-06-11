@@ -62,6 +62,11 @@ export default defineNuxtPlugin(nuxtApp => {
             sets: {
                 fa
             }
+        },
+        defaults:{
+            VIcon:{
+                size: 16
+            }
         }
     })
     nuxtApp.vueApp.use(vuetify)

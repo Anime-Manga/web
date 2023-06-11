@@ -125,9 +125,9 @@ const activeModal = ref("");
 
 onMounted(async () => {
   let vid = document.getElementById("my-video");
-  window.addEventListener("beforeunload", async () => await leaving());
-  window.addEventListener("pagehide", async () => await leaving());
-  window.addEventListener("blur", async () => await leaving());
+  window.addEventListener("beforeunload", leaving);
+  window.addEventListener("pagehide", leaving);
+  window.addEventListener("blur", leaving);
 
   if(!isNil(route.query.idroom))
     startCoreWs();
@@ -177,14 +177,11 @@ onMounted(async () => {
 onBeforeRouteLeave(async () => {
   stopWs();
   await saveStatusProgress();
+  
+  window.removeEventListener("beforeunload", leaving);
+  window.removeEventListener("pagehide", leaving);
+  window.removeEventListener("blur", leaving);
 })
-
-onUnmounted(() => {
-  window.removeEventListener("beforeunload", async () => await leaving());
-  window.removeEventListener("pagehide", async () => await leaving());
-  window.removeEventListener("blur", async () => await leaving());
-})
-
 //computed
 const getPreviousEpisode = computed(() => {
   if (episodes.value.length <= 0)

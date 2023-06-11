@@ -71,9 +71,9 @@ function check(index) {
     color: white;
     padding: 5px;
     top: -1;
-    left: -6px;
+    left: -7px;
     border-top-left-radius: 6px;
-    border-bottom-left-radius: 1px;
+    border-bottom-left-radius: 6px;
   }
 }
 

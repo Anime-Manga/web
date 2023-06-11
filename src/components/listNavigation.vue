@@ -1,15 +1,16 @@
 <template>
   <v-app-bar
-        color="primary"
-        density="compact"
-        collapse
-        elevation="0"
-        floating
-      >
+    color="primary"
+    density="compact"
+    collapse
+    elevation="0"
+    floating
+  >
 
-        <v-icon
-        class="ml-4"
+    <v-icon
+      class="ml-4"
       @click="show = !show"
+      size="24"
     >
       $menu
     </v-icon>
@@ -36,7 +37,7 @@
         <template
             v-slot:prepend
         >
-          <v-icon>{{item.icon}}</v-icon>
+          <v-icon size="24">{{item.icon}}</v-icon>
         </template>
 
         <v-list-item-title v-text="item.text" class="text-capitalize" />

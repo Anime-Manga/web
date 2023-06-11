@@ -1,4 +1,5 @@
 <template>
+  <searchComponent />
 </template>
 
 <script>
