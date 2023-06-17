@@ -6,7 +6,8 @@ export const useStore = defineStore('store', {
     state: () => ({
         currentSelectSearch:null,
         schemas: [],
-        notifications:[]
+        notifications:[],
+        user: null
     }),
     actions: {
         setSchemas(schemas){
@@ -24,6 +25,9 @@ export const useStore = defineStore('store', {
         },
         removeNotify(id){
             this.notifications = useFilter(this.notifications, (notify) => notify.id !== id);
+        },
+        setUser(data){
+            this.user = data;
         }
     },
     getters: {
@@ -31,24 +35,29 @@ export const useStore = defineStore('store', {
             return state.schemas;
         },
         getSchemasBySelectSearch(state){
-            const key = state.currentSelectSearch.split("-")[1];
-
-            for (const index in state.schemas) {
-
-                let name = _.get(state.schemas[index], 'name');
-                let type = _.get(state.schemas[index], 'type');
-                if(name === key)
-                {
-                    return {
-                        nameCfg: index,
-                        type
-                    };
+            if(!isNil(state.currentSelectSearch)){
+                const key = state.currentSelectSearch.split("-")[1];
+    
+                for (const index in state.schemas) {
+    
+                    let name = _.get(state.schemas[index], 'name');
+                    let type = _.get(state.schemas[index], 'type');
+                    if(name === key)
+                    {
+                        return {
+                            nameCfg: index,
+                            type
+                        };
+                    }
                 }
             }
             return null;
         },
         getNotifications(state){
             return state.notifications;
+        },
+        getUser(state){
+            return state.user;
         }
     },
 })

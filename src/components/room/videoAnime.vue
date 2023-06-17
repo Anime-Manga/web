@@ -31,7 +31,7 @@
     </div>
     <div class="menu" v-if="!isNil(startedWs) && (startedWs === true &&  !isNil(users) && users.length > 0 && users[0].nickname === currentUser || startedWs === false)">
       <div class="d-flex justify-center">
-        <v-icon color="white" @click="showMenu = !showMenu">
+        <v-icon color="white" @click="showMenu = !showMenu" size="24">
           {{ showMenu ? '$arrowDown' : '$arrowUp' }}
         </v-icon>
       </div>
@@ -71,7 +71,7 @@
               </v-btn>
           </NuxtLink>
         </div>
-        <v-btn v-if="status === 'authenticated'" @click="saveStatusProgress()">
+        <v-btn v-if="!isNil(store.getUser)" @click="saveStatusProgress()">
           Save Progress
         </v-btn>
       </div>
@@ -86,10 +86,17 @@
     @confirmResume="resume()"
   />
   <notify />
+
+  <FastDialog
+    v-model="showCertificate"
+    title="Problem certificate"
+    text="Problem certificate, please accept it"
+    textBtn="Open"
+    :actionButton="actionCertificate"
+  />
 </template>
 
 <script setup>
-import {useStore} from "~/store";
 const store = useStore();
 
 const runtimeConfig = useRuntimeConfig();
@@ -98,9 +105,8 @@ const route = useRoute();
 const router = useRouter();
 
 const { getRegister, getStatus, getProgress, saveProgress } = useApi();
-const { status, data: account } = useAuth();
 
-const { ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useWs();
+const { hostSocket, ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useWs();
 
 const hostHTTP = ref(runtimeConfig.public.httpBase);
 const hostWeb = ref(runtimeConfig.public.webBase);
@@ -120,14 +126,22 @@ const episodes = ref(null);
 const notSaveProgress = ref(false);
 const ignoreAlertRewriteProcess = ref(false);
 
+const showCertificate = ref(false);
+const actionCertificate = ref(null);
+
 //dialog
 const activeModal = ref("");
 
 onMounted(async () => {
   let vid = document.getElementById("my-video");
-  window.addEventListener("beforeunload", async () => await leaving());
-  window.addEventListener("pagehide", async () => await leaving());
-  window.addEventListener("blur", async () => await leaving());
+
+  vid.addEventListener('error', function(evt) {
+    openDialogCertificate(hostHTTP.value);
+  });
+
+  window.addEventListener("beforeunload", leaving);
+  window.addEventListener("pagehide", leaving);
+  window.addEventListener("blur", leaving);
 
   if(!isNil(route.query.idroom))
     startCoreWs();
@@ -177,14 +191,11 @@ onMounted(async () => {
 onBeforeRouteLeave(async () => {
   stopWs();
   await saveStatusProgress();
+  
+  window.removeEventListener("beforeunload", leaving);
+  window.removeEventListener("pagehide", leaving);
+  window.removeEventListener("blur", leaving);
 })
-
-onUnmounted(() => {
-  window.removeEventListener("beforeunload", async () => await leaving());
-  window.removeEventListener("pagehide", async () => await leaving());
-  window.removeEventListener("blur", async () => await leaving());
-})
-
 //computed
 const getPreviousEpisode = computed(() => {
   if (episodes.value.length <= 0)
@@ -213,6 +224,12 @@ const nextEpisode = computed(() => {
 });
 
 //watch
+watch(failedWs, () => {
+  if(failedWs.value === true){
+    openDialogCertificate(hostSocket.value.replace('wss', 'https'));
+  }
+})
+
 watch(time, () => {
   var vid = document.getElementById("my-video");
   vid.currentTime = time.value
@@ -235,6 +252,21 @@ watch(() => route.query.episode, async () => {
 })
 
 //functions
+function openDialogCertificate(url){
+    actionCertificate.value = () => {
+      const target = window.open(url, '_blank');
+
+      const token = setInterval(() => {
+        if(target.closed === true){
+          showCertificate.value = false;
+          reloadNuxtApp();
+          clearInterval(token);
+        }
+      }, 250);
+    };
+    showCertificate.value = true;
+}
+
 function getUrl(url) {
   if (url.includes(':')) {
     url = url.replace(/\\/g, '\\\\');
@@ -248,7 +280,7 @@ async function leaving() {
 }
 
 async function saveStatusProgress() {
-  if (status.value === 'authenticated' && notSaveProgress.value === false) {
+  if (!isNil(store.getUser) && notSaveProgress.value === false) {
     let vid = document.getElementById("my-video");
     let currentSeconds = vid.currentTime;
     progress.value.hours = Math.floor(currentSeconds / 3600);
@@ -326,14 +358,14 @@ function startCoreWs() {
   });
 
   room.value.on('createRoom', () => {
-    currentUser.value = account.value? account.value.user.name : new Date().getUTCMilliseconds().toString();
+    currentUser.value = useGet(store.getUser, 'username', new Date().getUTCMilliseconds().toString());
     const data = { nickname: currentUser.value, episode: route.query.episode };
     ws.value.send(JSON.stringify({ action: 'create', data }))
     console.log('request registration');
   });
 
   room.value.on('joinRoom', () => {
-    currentUser.value = account.value? account.value.user.name : new Date().getUTCMilliseconds().toString();
+    currentUser.value = useGet(store.getUser, 'username', new Date().getUTCMilliseconds().toString());
     sendMessage('join', { nickname: currentUser.value, idRoom: route.query.idroom })
     console.log('request join');
   });
@@ -404,15 +436,15 @@ async function getVideoEpisode() {
 }
 
 async function getProgressStatus() {
-  if (status.value === 'authenticated') {
+  if (!isNil(store.getUser)) {
     try {
-      progress.value = await getProgress('video', route.query.name, account.value.user.name, route.query.nameCfg);
+      progress.value = await getProgress('video', route.query.name, store.getUser?.username, route.query.nameCfg);
     } catch {
       progress.value = {
         nameCfg: route.query.nameCfg,
         name: route.query.name,
         nameEpisode: route.query.episode,
-        username: account.value.user.name,
+        username: store.getUser?.username,
         hours: 0,
         minutes: 0,
         seconds: 0

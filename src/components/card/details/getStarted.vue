@@ -65,11 +65,10 @@ const props = defineProps({
 })
 const {item, contents} = toRefs(props);
 
-//user
-const {data: account, status} = useAuth();
-
 //api
 const {getProgress} = useApi();
+
+const store = useStore();
 
 const progressTracker = ref(null);
 const foundProgress = ref(null);
@@ -115,10 +114,10 @@ watch(foundMedia, (newVal, oldVal) => {
 }, {deep: true})
 
 async function setProgress(){
-  if(status.value === 'authenticated' && isNil(item.value.urlPageDownload))
+  if(!isNil(store.getUser) && isNil(item.value.urlPageDownload))
   {
     try{
-      progressTracker.value = await getProgress(item.value.type, item.value.name_id, account.value.user.name, item.value.nameCfg);
+      progressTracker.value = await getProgress(item.value.type, item.value.name_id, store.getUser?.username, item.value.nameCfg);
       foundProgress.value = true;
     }catch(err){
       if(err.response.status === 404)

@@ -18,7 +18,6 @@ export default defineNuxtConfig({
         'nuxt-icons',
         '@pinia/nuxt',
         '@nuxt/devtools',
-        '@sidebase/nuxt-auth',
         'nuxt-lodash',
         //vuetify
         async (options, nuxt) => {
@@ -37,18 +36,22 @@ export default defineNuxtConfig({
     },
     runtimeConfig:{
         apiBase: process.env.API_BASE || 'http://localhost:5000',
-        secret: 'animemanga',
 
         public: {
             socketBase: process.env.SOCKET_BASE || 'ws://localhost:1234/room',
             httpBase: process.env.HTTP_BASE || 'http://localhost:5002',
             basePath: process.env.BASE_PATH || '/public',
-            webBase: process.env.WEB_BASE || 'http://localhost:3000'
+            webBase: process.env.WEB_BASE || 'http://localhost:3000',
+            secret: 'animemanga',
         }
         
     },
-    auth: {
-        origin: process.env.ORIGIN || "http://localhost:3000",
-        enableGlobalAppMiddleware: true
-    }
+    imports: {
+      dirs: ['stores'],
+    },  
+    pinia: {
+      autoImports: [
+        'defineStore'
+      ],
+    },
 })

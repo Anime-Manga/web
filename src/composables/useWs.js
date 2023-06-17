@@ -32,9 +32,9 @@ export default function useApi(){
                 room.value.emit('checkRoom');
             };
 
-            ws.value.onerror = function () {
+            ws.value.onerror = function (err) {
                 failed.value = true;
-                console.log("Failed connected to the echo WebSocket Server");
+                console.log("Failed connected to the echo WebSocket Server", err);
                 ws.value = null;
             };
 
@@ -60,6 +60,7 @@ export default function useApi(){
     }
 
     return{
+        hostSocket,
         ws,
         room,
         started,

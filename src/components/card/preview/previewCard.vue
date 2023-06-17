@@ -44,7 +44,6 @@
 <script setup>
 import {Buffer} from 'buffer'
 import _ from 'lodash'
-import {useStore} from "~/store";
 const {isNil} = useLodash();
 //store
 const store = useStore();

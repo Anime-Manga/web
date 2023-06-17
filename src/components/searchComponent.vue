@@ -1,5 +1,4 @@
 <template>
-  <div>
     <div
         class="ma-auto"
         id="banner"
@@ -43,16 +42,14 @@
           v-else-if="data && data.length > 0"
       >
         <div class="d-flex flex-column">
-          <div>
-            <v-pagination
-                v-model="page"
-                class="my-4"
-                color="white"
-                :length="pages.length"
-                prev-icon="arrow-left"
-                next-icon="arrow-right"
-            />
-          </div>
+          <v-pagination
+              v-model="page"
+              class="my-4"
+              color="white"
+              :length="pages.length"
+              prev-icon="$arrowLeft"
+              next-icon="$arrowRight"
+          />
           <div class="d-flex flex-row flex-wrap justify-center">
             <preview-card
                 v-for="item in pages[page - 1]"
@@ -61,25 +58,27 @@
                 @closeDialogAndUpdate="clickSearch()"
             />
           </div>
+          <v-pagination
+              v-model="page"
+              class="my-4"
+              color="white"
+              :length="pages.length"
+              prev-icon="$arrowLeft"
+              next-icon="$arrowRight"
+              @next=""
+              @prev=""
+              
+          />
         </div>
       </template>
     </div>
-  </div>
 </template>
 
 <script setup>
 //variables
 import {watch} from "vue";
-import {useStore} from "~/store";
 import _ from 'lodash'
 const {isNil} = useLodash();
-
-const {
-  signOut,
-  data: account
-} = useAuth()
-
-const router = useRouter();
 
 let data = ref([]);
 let pages = ref([]);
@@ -91,7 +90,7 @@ let page = ref();
 const props = defineProps({
   typeSearch:{
     type: String,
-    required: true
+    default: null
   }
 })
 const {typeSearch} = toRefs(props);
@@ -168,14 +167,14 @@ async function clickSearch() {
   try{
     switch (typeSearch.value) {
       case 'all':
-        data.value = await getAll(account?.value?.user?.name);
+        data.value = await getAll(store.getUser?.username);
         break;
       case "local":
-        data.value = await searchLocal(search.value, account?.value?.user?.name);
+        data.value = await searchLocal(search.value, store.getUser?.username);
         break;
 
       case "search-watchlist":
-        data.value = await getAllWatchList(account?.value?.user?.name)
+        data.value = await getAllWatchList(store.getUser?.username)
         break;
       default:
         const schema = store.getSchemasBySelectSearch;
@@ -185,12 +184,16 @@ async function clickSearch() {
     isLoading.value = false;
   }
 }
+
+async function moveToTop(){
+
+}
 </script>
 
 <style scoped>
 .logo {
   height: 220px;
-  width: 100%;
+  width: 99.95%;
   object-fit: contain;
 }
 </style>

@@ -34,6 +34,7 @@
                   :src="getUrl()"
                   class="img-page pa-1"
                   @click="changePage"
+                  :onerror="openDialogCertificate(hostHTTP)"
               />
               <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
                 <v-progress-circular
@@ -76,6 +77,7 @@
                 ref="imgBooks"
                 class="img-page"
                 v-show="!loadingImage"
+                :onerror="openDialogCertificate(hostHTTP)"
             />
             <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
               <v-progress-circular
@@ -97,6 +99,7 @@
         <v-icon
             color="white"
             @click="showMenu = !showMenu"
+            size="24"
         >
           {{ showMenu ? '$arrowDown' : '$arrowUp' }}
         </v-icon>
@@ -160,7 +163,7 @@
             MODE: {{ modeList ? 'List' : 'Page' }}
           </v-btn>
           <v-btn
-              v-if="status === 'authenticated'"
+              v-if="!isNil(store.getUser)"
               @click="saveStatusProgress()"
           >
             Save Progress
@@ -177,6 +180,14 @@
     @close="activeModal = ''"
     @confirmResume="resume()"
   />
+
+  <FastDialog
+    v-model="showCertificate"
+    title="Problem certificate"
+    text="Problem certificate, please accept it"
+    textBtn="Open"
+    :actionButton="actionCertificate"
+  />
 </template>
 
 <script setup>
@@ -185,7 +196,6 @@ import _ from 'lodash'
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
-const { status, data: account } = useAuth();
 const {getRegister, getStatus, saveProgress, getProgress} = useApi();
 
 //env
@@ -200,6 +210,9 @@ const done = ref(0)
 const progress = ref(null);
 const notSaveProgress = ref(false);
 const ignoreAlertRewriteProcess = ref(false);
+
+const showCertificate = ref(false);
+const actionCertificate = ref(null);
 
 //dialog
 const activeModal = ref("");
@@ -217,10 +230,16 @@ onMounted(() => {
   checkDownload();
 
   window.addEventListener("beforeunload", leaving);
+  window.addEventListener("pagehide", leaving);
+  window.addEventListener("blur", leaving);
 })
 
 onBeforeRouteLeave(async () => {
   await saveStatusProgress();
+
+  window.removeEventListener("beforeunload", leaving);
+  window.removeEventListener("pagehide", leaving);
+  window.removeEventListener("blur", leaving);
 })
 
 //computed
@@ -297,12 +316,27 @@ watch(route, async () => {
   
 
 //functions
+function openDialogCertificate(url){
+    actionCertificate.value = () => {
+      const target = window.open(url, '_blank');
+
+      const token = setInterval(() => {
+        if(target.closed === true){
+          showCertificate.value = false;
+          reloadNuxtApp();
+          clearInterval(token);
+        }
+      }, 250);
+    };
+    showCertificate.value = true;
+}
+
 async function leaving(){
   await saveStatusProgress();
 }
 
 async function saveStatusProgress(page = indexPage){
-  if(status.value === 'authenticated' && notSaveProgress.value === false)
+  if(!isNil(store.getUser) && notSaveProgress.value === false)
   {
     if(modeList.value)
     {
@@ -413,16 +447,16 @@ function closeFullscreenMobile() {
 }
 
 async function load() {
-  if(status.value === 'authenticated')
+  if(!isNil(store.getUser))
   {
     try{
-      progress.value = await getProgress('book', route.query.name, account.value.user.name, route.query.nameCfg);
+      progress.value = await getProgress('book', route.query.name, store.getUser?.username, route.query.nameCfg);
     }catch{
       progress.value = {
         nameCfg: route.query.nameCfg,
         name: route.query.name,
         nameChapter: route.query.name,
-        username: account.value.user.name,
+        username: store.getUser?.username,
         page: 0
       }
     }
@@ -529,7 +563,7 @@ function close() {
   left: 0;
   right: 0;
   margin: auto;
-  z-index: 1;
+  z-index: 3;
 
   #closeFullscreenMobile {
     background: rgba(0, 0, 0, 0.5);
@@ -551,7 +585,7 @@ function close() {
 
 .menu {
   padding: 5px 10px 10px 10px;
-  z-index: 1;
+  z-index: 3;
   width: 100%;
   position: fixed;
   left: 0;
