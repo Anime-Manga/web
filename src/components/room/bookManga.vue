@@ -34,6 +34,7 @@
                   :src="getUrl()"
                   class="img-page pa-1"
                   @click="changePage"
+                  :onerror="openDialogCertificate(hostHTTP)"
               />
               <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
                 <v-progress-circular
@@ -76,6 +77,7 @@
                 ref="imgBooks"
                 class="img-page"
                 v-show="!loadingImage"
+                :onerror="openDialogCertificate(hostHTTP)"
             />
             <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
               <v-progress-circular
@@ -178,6 +180,14 @@
     @close="activeModal = ''"
     @confirmResume="resume()"
   />
+
+  <FastDialog
+    v-model="showCertificate"
+    title="Problem certificate"
+    text="Problem certificate, please accept it"
+    textBtn="Open"
+    :actionButton="actionCertificate"
+  />
 </template>
 
 <script setup>
@@ -200,6 +210,9 @@ const done = ref(0)
 const progress = ref(null);
 const notSaveProgress = ref(false);
 const ignoreAlertRewriteProcess = ref(false);
+
+const showCertificate = ref(false);
+const actionCertificate = ref(null);
 
 //dialog
 const activeModal = ref("");
@@ -303,6 +316,21 @@ watch(route, async () => {
   
 
 //functions
+function openDialogCertificate(url){
+    actionCertificate.value = () => {
+      const target = window.open(url, '_blank');
+
+      const token = setInterval(() => {
+        if(target.closed === true){
+          showCertificate.value = false;
+          reloadNuxtApp();
+          clearInterval(token);
+        }
+      }, 250);
+    };
+    showCertificate.value = true;
+}
+
 async function leaving(){
   await saveStatusProgress();
 }

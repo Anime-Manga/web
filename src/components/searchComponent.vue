@@ -1,5 +1,4 @@
 <template>
-  <div>
     <div
         class="ma-auto"
         id="banner"
@@ -73,7 +72,6 @@
         </div>
       </template>
     </div>
-  </div>
 </template>
 
 <script setup>

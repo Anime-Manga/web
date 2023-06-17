@@ -2,6 +2,8 @@ import cry from 'crypto-js';
 
 export default function useAuth(){
 
+    const config = useRuntimeConfig();
+
     function createCookie(data){
 
         const date = new Date();
@@ -14,7 +16,7 @@ export default function useAuth(){
         });
 
         try{
-            const token = cry.AES.encrypt(JSON.stringify(data), 'test').toString();
+            const token = cry.AES.encrypt(JSON.stringify(data), config.secret).toString();
             auth.value = token;
         }catch(err){
             console.log(err);
@@ -27,7 +29,7 @@ export default function useAuth(){
     }
 
     function getCookie(){
-        
+
         const date = new Date();
         date.setFullYear(date.getFullYear() + 1);
 
@@ -37,7 +39,7 @@ export default function useAuth(){
         });
 
         if(!isNil(token.value))
-            return  JSON.parse(cry.AES.decrypt(token.value, 'test').toString(cry.enc.Utf8));
+            return  JSON.parse(cry.AES.decrypt(token.value, config.secret).toString(cry.enc.Utf8));
         else
             return null;
     }

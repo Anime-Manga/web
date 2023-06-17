@@ -86,6 +86,14 @@
     @confirmResume="resume()"
   />
   <notify />
+
+  <FastDialog
+    v-model="showCertificate"
+    title="Problem certificate"
+    text="Problem certificate, please accept it"
+    textBtn="Open"
+    :actionButton="actionCertificate"
+  />
 </template>
 
 <script setup>
@@ -98,7 +106,7 @@ const router = useRouter();
 
 const { getRegister, getStatus, getProgress, saveProgress } = useApi();
 
-const { ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useWs();
+const { hostSocket, ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useWs();
 
 const hostHTTP = ref(runtimeConfig.public.httpBase);
 const hostWeb = ref(runtimeConfig.public.webBase);
@@ -118,11 +126,19 @@ const episodes = ref(null);
 const notSaveProgress = ref(false);
 const ignoreAlertRewriteProcess = ref(false);
 
+const showCertificate = ref(false);
+const actionCertificate = ref(null);
+
 //dialog
 const activeModal = ref("");
 
 onMounted(async () => {
   let vid = document.getElementById("my-video");
+
+  vid.addEventListener('error', function(evt) {
+    openDialogCertificate(hostHTTP.value);
+  });
+
   window.addEventListener("beforeunload", leaving);
   window.addEventListener("pagehide", leaving);
   window.addEventListener("blur", leaving);
@@ -208,6 +224,12 @@ const nextEpisode = computed(() => {
 });
 
 //watch
+watch(failedWs, () => {
+  if(failedWs.value === true){
+    openDialogCertificate(hostSocket.value.replace('wss', 'https'));
+  }
+})
+
 watch(time, () => {
   var vid = document.getElementById("my-video");
   vid.currentTime = time.value
@@ -230,6 +252,21 @@ watch(() => route.query.episode, async () => {
 })
 
 //functions
+function openDialogCertificate(url){
+    actionCertificate.value = () => {
+      const target = window.open(url, '_blank');
+
+      const token = setInterval(() => {
+        if(target.closed === true){
+          showCertificate.value = false;
+          reloadNuxtApp();
+          clearInterval(token);
+        }
+      }, 250);
+    };
+    showCertificate.value = true;
+}
+
 function getUrl(url) {
   if (url.includes(':')) {
     url = url.replace(/\\/g, '\\\\');

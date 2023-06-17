@@ -5,8 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Released]
+## [2.0.1] - 17-06-2023
+### Added
+- use default cookie for set auth with encryption
+- If problem certificate, show for accept certificate
+
+### Fixed
+- GUI of the description
+- When is set fullscreen by mobile for read book, hide menu for sideMenu
+
+### Removed
+- Lib for auth
+
 ## [2.0.0] - 28-05-2023
-### Add
+### Added
 - Account for tracer of book/video
 - New manga for adult
 - All cards set icon for set if video or book
@@ -22,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [1.0.2] - 26-12-2022
-### Add
+### Added
 - Read page or list
 
 ### Changed
