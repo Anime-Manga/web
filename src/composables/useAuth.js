@@ -16,7 +16,7 @@ export default function useAuth(){
         });
 
         try{
-            const token = cry.AES.encrypt(JSON.stringify(data), config.secret).toString();
+            const token = cry.AES.encrypt(JSON.stringify(data), config.public.secret).toString();
             auth.value = token;
         }catch(err){
             console.log(err);
@@ -39,7 +39,7 @@ export default function useAuth(){
         });
 
         if(!isNil(token.value))
-            return  JSON.parse(cry.AES.decrypt(token.value, config.secret).toString(cry.enc.Utf8));
+            return  JSON.parse(cry.AES.decrypt(token.value, config.public.secret).toString(cry.enc.Utf8));
         else
             return null;
     }

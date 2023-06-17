@@ -35,18 +35,20 @@ export const useStore = defineStore('store', {
             return state.schemas;
         },
         getSchemasBySelectSearch(state){
-            const key = state.currentSelectSearch.split("-")[1];
-
-            for (const index in state.schemas) {
-
-                let name = _.get(state.schemas[index], 'name');
-                let type = _.get(state.schemas[index], 'type');
-                if(name === key)
-                {
-                    return {
-                        nameCfg: index,
-                        type
-                    };
+            if(!isNil(state.currentSelectSearch)){
+                const key = state.currentSelectSearch.split("-")[1];
+    
+                for (const index in state.schemas) {
+    
+                    let name = _.get(state.schemas[index], 'name');
+                    let type = _.get(state.schemas[index], 'type');
+                    if(name === key)
+                    {
+                        return {
+                            nameCfg: index,
+                            type
+                        };
+                    }
                 }
             }
             return null;
