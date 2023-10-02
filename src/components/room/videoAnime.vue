@@ -1,11 +1,72 @@
 <template>
   <div class="d-flex flex-column align-center">
-    <div class="contain-video">
-      <video id="my-video" controls>
+    <div id="contain-video" @mousemove="setShowControls()">
+      <video id="my-video" :style="fullScreen? 'height: calc(100% - 75px);' : 'height: 35%;'">
         <template v-if="data != null">
           <source :src="getUrl(data.episodePath)" type="video/mp4">
         </template>
       </video>
+      <div class="d-flex flex-column" v-if="showControls">
+        <div class="d-flex flex-rows align-center">
+          <span class="mr-2" style="color: white;">{{ currentPositionDurationLabel }}</span>
+          <v-slider
+            hide-details="true"
+            color="white"
+            v-bind:model-value="currentPositionDuration"
+            @end="changePosition($event)"
+            :max="maxDuration"
+          >
+          </v-slider>
+          <span class="ml-2" style="color: white;">{{ maxDurationLabel }}</span>
+        </div>
+        <div class="d-flex flex-row">
+          <v-btn
+            @click="setPlay()"
+            class="mr-2"
+          >
+            <v-icon>
+              <template v-if="!play">
+                $play
+              </template>
+              <template v-else>
+                $pause
+              </template>
+            </v-icon>
+          </v-btn>
+          <div style="max-width: 300px; width: 100%;">
+            <v-slider
+              hide-details="true"
+              v-model="volume"
+              color="white"
+              step="0.1"
+              max="1"
+            >
+              <template v-slot:prepend>
+                <v-icon
+                  @click="setMuted()"
+                  color="white"
+                >
+                  <template v-if="!muted">
+                    $speak
+                  </template>
+                  <template v-else>
+                    $muted
+                  </template>
+                </v-icon>
+              </template>
+            </v-slider>
+          </div>
+          <v-spacer></v-spacer>
+          <v-btn
+            class="ml-2"
+            @click="setFullScreen()"
+          >
+            <v-icon>
+              $fullVideo
+            </v-icon>
+          </v-btn>
+        </div>
+      </div>
     </div>
     <div class="ma-2">
       <toolTips
@@ -94,9 +155,13 @@
     textBtn="Open"
     :actionButton="actionCertificate"
   />
+  <Toaster position="bottom-right" />
 </template>
 
 <script setup>
+import {DateTime} from 'luxon';
+
+const { $toast } = useNuxtApp()
 const store = useStore();
 
 const runtimeConfig = useRuntimeConfig();
@@ -118,13 +183,21 @@ const idRoom = ref(null);
 const root = ref(null);
 const currentUser = ref(null);
 const users = ref(null);
-const pause = ref(true);
-const human = ref(true);
 const time = ref(0);
 const showMenu = ref(false);
 const episodes = ref(null);
 const notSaveProgress = ref(false);
 const ignoreAlertRewriteProcess = ref(false);
+
+//player
+const play = ref(false);
+const volume = ref(1);
+const muted = ref(false);
+const fullScreen = ref(false);
+const showControls = ref(true);
+const tokenShowControls = ref();
+const currentPositionDuration = ref(0);
+const maxDuration = ref(0);
 
 const showCertificate = ref(false);
 const actionCertificate = ref(null);
@@ -135,9 +208,11 @@ const activeModal = ref("");
 onMounted(async () => {
   let vid = document.getElementById("my-video");
 
-  vid.addEventListener('error', function(evt) {
+  const {error} = await useFetch(hostHTTP.value, {method: 'get'})
+  
+  if(!isNil(error.value) && useGet(error.value, 'statusCode', 200) === 500){
     openDialogCertificate(hostHTTP.value);
-  });
+  }
 
   window.addEventListener("beforeunload", leaving);
   window.addEventListener("pagehide", leaving);
@@ -159,32 +234,16 @@ onMounted(async () => {
       vid.load();
     }
   }
-
-  //event
-  vid.addEventListener("canplaythrough", () => {
+  
+  vid.addEventListener("timeupdate", () => {
     let vid = document.getElementById("my-video");
-    if (vid.currentTime > 0)
-      room.value.emit('time', vid.currentTime);
-  });
-  vid.addEventListener("pause", () => {
-    if(human.value === false){
-      human.value = true;
-      console.log('pausa ma non invio nulla');
-      return;
-    }
     
-    room.value.emit('pause', true);
-      console.log('pausa e invio');
+    currentPositionDuration.value = vid.currentTime;
+    maxDuration.value = vid.duration;
   });
-  vid.addEventListener("playing", () => {
-    if(human.value === false){
-      human.value = true;
-      console.log('playing ma non invio nulla');
-      return;
-    }
-    
-    console.log('playing e invio');
-    room.value.emit('pause', false);
+
+  document.getElementById('contain-video').addEventListener('fullscreenchange', (event) => {
+    setCloseFullScreen();
   });
 })
 
@@ -282,6 +341,7 @@ async function leaving() {
 async function saveStatusProgress() {
   if (!isNil(store.getUser) && notSaveProgress.value === false) {
     let vid = document.getElementById("my-video");
+
     let currentSeconds = vid.currentTime;
     progress.value.hours = Math.floor(currentSeconds / 3600);
     currentSeconds -= progress.value.hours * 3600;
@@ -313,9 +373,7 @@ function startCoreWs() {
         else if(data.message.type === 'changeSource')
           message = `${data.message.nickname} has change episode`;
 
-        store.addNotify({
-          message
-        })
+        $toast(message);
       }
 
       //update info general
@@ -398,21 +456,20 @@ function startCoreWs() {
 function setPause(pause){
   let vid = document.getElementById("my-video");
   
-  if (pause === true && vid.paused === false) {
-    human.value = false;
-    console.log('pausa!');
+  if (pause === true) {
+    play.value = false;
     vid.pause();
-  } else if(pause === false && vid.paused === true){
-    human.value = false;
-    console.log('riprendi!');
+  } else {
+    play.value = true;
     try {
       vid.play();
     } catch {
-      vid.muted = true;
+      setMuted();
       vid.play();
     }
   }
 }
+
 function sendMessage(setAction, data) {
   console.log(ws.value);
   ws.value.send(JSON.stringify({ action: setAction, data }))
@@ -473,10 +530,90 @@ function copyLink(){
     console.log(`Copy by here please: ${hostWeb.value}/room?idroom=${idRoom.value}&type=anime&name=${route.query.name}`);
   }
 }
+
+//controls video
+function setPlay(){
+  let vid = document.getElementById("my-video");
+  play.value = !play.value;
+
+  if(!play.value){
+    vid.pause();
+    setTimeout(() => room.value.emit('time', vid.currentTime), 250);
+  }else{
+    vid.play();
+  }
+
+  room.value.emit('pause', !play.value);
+}
+
+watch(volume, (val) => {
+  let vid = document.getElementById("my-video");
+
+  if(val === 0 && muted.value === false)
+    muted.value = true;
+  else if(muted.value === true)
+    setMuted();
+
+  vid.volume = val;
+})
+
+function setMuted(){
+  let vid = document.getElementById("my-video");
+
+  muted.value = !muted.value;
+  vid.muted = muted.value;
+}
+
+function setFullScreen(){
+  if(fullScreen.value === false){
+    let vid = document.getElementById("contain-video");
+
+    if (vid.requestFullscreen) {
+      vid.requestFullscreen();
+    } else if (vid.webkitRequestFullscreen) { /* Safari */
+      vid.webkitRequestFullscreen();
+    } else if (vid.msRequestFullscreen) { /* IE11 */
+      vid.msRequestFullscreen();
+    }
+    
+    fullScreen.value = true;
+  }else{
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) { /* Safari */
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) { /* IE11 */
+      document.msExitFullscreen();
+    }
+    fullScreen.value = false;
+  }
+}
+
+function setShowControls(){
+  clearTimeout(tokenShowControls.value);
+  if(fullScreen.value === true){
+    tokenShowControls.value = setTimeout(() => {
+      showControls.value = false;
+    }, 3000);
+    showControls.value = true;
+  }
+}
+
+function setCloseFullScreen(){
+  clearTimeout(tokenShowControls.value);
+  showControls.value = true;
+}
+
+function changePosition(value){
+  time.value = value;
+}
+
+const maxDurationLabel = computed(() => DateTime.fromSeconds(maxDuration.value, {zone: 'utc'}).toLocaleString(DateTime.TIME_24_WITH_SECONDS));
+const currentPositionDurationLabel = computed(() => DateTime.fromSeconds(currentPositionDuration.value, {zone: 'utc'}).toLocaleString(DateTime.TIME_24_WITH_SECONDS));
 </script>
 
 <style lang="scss" scoped>
-.contain-video {
+#contain-video {
   width: 70%;
 }
 
