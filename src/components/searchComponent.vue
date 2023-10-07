@@ -104,7 +104,7 @@ onMounted(() => {
     clickSearch();
 })
 //api
-const {getAll, searchLocal, searchDynamic, getAllWatchList} = useApi();
+const {getAll, searchLocal, searchDynamic, getAllWatchList, apiAsync} = useApi();
 
 watch(data, () => {
   setPages();
@@ -164,29 +164,51 @@ function setPages() {
 
 async function clickSearch() {
   isLoading.value = true;
-  try{
-    switch (typeSearch.value) {
-      case 'all':
-        data.value = await getAll(store.getUser?.username);
-        break;
-      case "local":
-        data.value = await searchLocal(search.value, store.getUser?.username);
-        break;
-
-      case "search-watchlist":
-        data.value = await getAllWatchList(store.getUser?.username)
-        break;
-      default:
-        const schema = store.getSchemasBySelectSearch;
-        data.value = await searchDynamic(schema.type, search.value, schema.nameCfg);
-    }
-  }finally{
-    isLoading.value = false;
+  
+  switch (typeSearch.value) {
+    case 'all':
+      await apiAsync(
+        getAll(store.getUser?.username),
+        (rs) => data.value = rs,
+        (err) => {
+          if(err.response?.status === 404)
+          data.value = [];
+        }
+      )
+      break;
+    case "local":
+      await apiAsync(
+        searchLocal(search.value, store.getUser?.username),
+        (rs) => data.value = rs,
+        (err) => {
+          if(err.response?.status === 404)
+          data.value = [];
+        }
+      )
+      break;
+    case "search-watchlist":
+      await apiAsync(
+        getAllWatchList(store.getUser?.username),
+        (rs) => data.value = rs,
+        (err) => {
+          if(err.response?.status === 404)
+          data.value = [];
+        }
+      )
+      break;
+    default:
+      const schema = store.getSchemasBySelectSearch;
+      await apiAsync(
+        searchDynamic(schema.type, search.value, schema.nameCfg),
+        (rs) => data.value = rs,
+        (err) => {
+          if(err.response?.status === 404)
+          data.value = [];
+        }
+      )
   }
-}
 
-async function moveToTop(){
-
+  isLoading.value = false;
 }
 </script>
 

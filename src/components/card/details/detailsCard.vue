@@ -133,7 +133,7 @@
 const store = useStore();
 
 //api
-const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus} = useApi();
+const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus, apiAsync} = useApi();
 
 const emit = defineEmits(['closeDialog','closeDialogAndUpdate','updateData']);
 
@@ -154,6 +154,7 @@ const isLoadingDelete = ref(false);
 const error = ref(null);
 const date = ref(null);
 const contents = ref(null);
+const tokenStatus = ref();
 
 
 watch(item, () => date.value = new Date());
@@ -161,14 +162,13 @@ watch(item, () => date.value = new Date());
 watch(date, () => {
   if(isNil(item.value.urlPageDownload))
     {
-      setTimeout(async () => {
-        try{
-          contents.value = await getStatus(item.value.type, item.value.name_id, item.value.nameCfg);
-        }catch(err){
-          console.log(err);
-        }finally{
-          date.value = new Date();
-        }
+      tokenStatus.value = setTimeout(async () => {
+        await apiAsync(
+          getStatus(item.value.type, item.value.name_id, item.value.nameCfg),
+          (data) => contents.value = data,
+          null,
+          () => date.value = new Date()
+        );
       }, 1000);
     }
 }, {immediate: true})
@@ -176,46 +176,42 @@ watch(date, () => {
 
 async function download(){
   isLoadingDownload.value = true;
+  
+  let schema = store.getSchemasBySelectSearch;
 
-  try{
-    let schema = store.getSchemasBySelectSearch;
-
-    let data = await downloadContent(item.value.type, item.value.urlPageDownload, schema.nameCfg);
-    emit('updateData', data);
-  }catch(err){
-    console.log(err);
-    error.value = `Impossible send request for download this ${item.value.urlPageDownload}`;
-  }finally{
-    isLoadingDownload.value = false;
-  }
+  await apiAsync(
+    downloadContent(item.value.type, item.value.urlPageDownload, schema.nameCfg),
+    (data) => emit('updateData', data),
+    () => error.value = `Impossible send request for download this ${item.value.urlPageDownload}`,
+    () => isLoadingDownload.value = false
+  );
 }
 
 async function reDownload(){
   isLoadingReDownload.value = true;
   error.value = null;
 
-  try{
-    await reDownloadContent(item.value.type, item.value.name_id);
-  }catch{
-    error.value = `Impossible send request for re-download this ${item.value.urlPageDownload}`;
-  }finally{
-    isLoadingReDownload.value = false;
-  }
+  await apiAsync(
+    reDownloadContent(item.value.type, item.value.name_id),
+    null,
+    () => error.value = `Impossible send request for re-download this ${item.value.urlPageDownload}`,
+    () => isLoadingReDownload.value = false
+  );
 }
 
 async function remove(){
   isLoadingDelete.value = true;
   error.value = null;
 
-  try{
-    await removeContent(item.value.type, item.value.name_id, item.value.nameCfg);
-    closeAndUpdate();
-  }catch(err){
-    console.log(err);
-    error.value = `Impossible send request for remove this ${item.value.urlPageDownload}`;
-  }finally{
-    isLoadingDelete.value = false;
-  }
+  await apiAsync(
+    removeContent(item.value.type, item.value.name_id, item.value.nameCfg),
+    () => {
+      clearTimeout(tokenStatus.value);
+      closeAndUpdate();
+    },
+    () => error.value = `Impossible send request for remove this ${item.value.urlPageDownload}`,
+    () => isLoadingDelete.value = false
+  );
 }
 
 function closeAndUpdate(){
@@ -228,14 +224,18 @@ function close(){
 
 async function setWatchList(state){
   let username = store.getUser?.username;
-  try {
-    if(state === true)
-      await removeWatchList(username, item.value.name_id, item.value.nameCfg);
-    else
-      await addWatchList(username, item.value.name_id, item.value.nameCfg);
 
-    item.value.watchList = !state;
-  }catch{}
+  if(state === true){
+    await apiAsync(
+      removeWatchList(username, item.value.name_id, item.value.nameCfg)
+    )
+  }else{
+    await apiAsync(
+      addWatchList(username, item.value.name_id, item.value.nameCfg)
+    )
+  }
+
+  item.value.watchList = !state;
 }
 </script>
 

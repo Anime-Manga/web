@@ -196,7 +196,7 @@ import _ from 'lodash'
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
-const {getRegister, getStatus, saveProgress, getProgress} = useApi();
+const {getRegister, getStatus, saveProgress, getProgress, apiAsync} = useApi();
 
 //env
 const data = ref(null)
@@ -355,7 +355,11 @@ async function saveStatusProgress(page = indexPage){
 
     progress.value.name = route.query.name;
     progress.value.nameChapter = data.value.chapterId;
-    progress.value = await saveProgress('book', progress.value)
+
+    await apiAsync(
+      saveProgress('book', progress.value),
+      (data) => progress.value = data
+    );
   }
 }
 
@@ -449,38 +453,35 @@ function closeFullscreenMobile() {
 async function load() {
   if(!isNil(store.getUser))
   {
-    try{
-      progress.value = await getProgress('book', route.query.name, store.getUser?.username, route.query.nameCfg);
-    }catch{
-      progress.value = {
-        nameCfg: route.query.nameCfg,
-        name: route.query.name,
-        nameChapter: route.query.name,
-        username: store.getUser?.username,
-        page: 0
+    await apiAsync(
+      getProgress('book', route.query.name, store.getUser?.username, route.query.nameCfg),
+      (data) => progress.value = data,
+      () => {
+        progress.value = {
+          nameCfg: route.query.nameCfg,
+          name: route.query.name,
+          nameChapter: route.query.name,
+          username: store.getUser?.username,
+          page: 0
+        }
       }
-    }
+    );
   }
+  
+  if(!isNil(progress.value) && progress.value.nameChapter === result.chapterId)
+    indexPage.value = progress.value.page;
+  else
+    indexPage.value = 0;
+  
+  await apiAsync(
+    getRegister('book', route.query.chapter),
+    (rs) => data.value = rs
+  )
 
-  try{
-    const result = await getRegister('book', route.query.chapter)
-
-    if(!isNil(progress.value) && progress.value.nameChapter === result.chapterId)
-      indexPage.value = progress.value.page;
-    else
-      indexPage.value = 0;
-
-    data.value = result;
-  }catch(err){
-    console.log(err);
-  }
-
-  try{
-    const result = await getStatus('book', route.query.name)
-    chapters.value = result;
-  }catch(err){
-    console.log(err);
-  }
+  await apiAsync(
+    getStatus('book', route.query.name),
+    (data) => chapters.value = data
+  );
   
   if(!isNil(progress.value))
   {
@@ -495,10 +496,6 @@ function resume(){
   activeModal.value = '';
   notSaveProgress.value = true;
   router.push(`/room?type=manga&chapter=${progress.value.nameChapter}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)
-}
-
-function close() {
-  router.push('/')
 }
 </script>
 

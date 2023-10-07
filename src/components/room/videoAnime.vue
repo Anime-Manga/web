@@ -13,7 +13,7 @@
             hide-details="true"
             color="white"
             v-bind:model-value="currentPositionDuration"
-            @end="changePosition($event)"
+            @end="setCurrentPositionVideo($event, true, true)"
             :max="maxDuration"
           >
           </v-slider>
@@ -169,7 +169,7 @@ const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
 
-const { getRegister, getStatus, getProgress, saveProgress } = useApi();
+const { getRegister, getStatus, getProgress, saveProgress, apiAsync } = useApi();
 
 const { hostSocket, ws, room, started: startedWs, failed: failedWs, startWs, stopWs } = useWs();
 
@@ -183,7 +183,6 @@ const idRoom = ref(null);
 const root = ref(null);
 const currentUser = ref(null);
 const users = ref(null);
-const time = ref(0);
 const showMenu = ref(false);
 const episodes = ref(null);
 const notSaveProgress = ref(false);
@@ -230,22 +229,58 @@ onMounted(async () => {
     if (isNil(route.query.idroom) && !isNil(progress.value)) {
       let time = (progress.value.hours * 3600) + (progress.value.minutes * 60) + progress.value.seconds;
 
-      vid.currentTime = time;
-      vid.load();
+      setCurrentPositionVideo(time);
     }
   }
+  vid.load();
   
   vid.addEventListener("timeupdate", () => {
     let vid = document.getElementById("my-video");
     
-    currentPositionDuration.value = vid.currentTime;
+    if(play.value && vid.currentTime > currentPositionDuration.value )
+      currentPositionDuration.value = vid.currentTime;
+
     maxDuration.value = vid.duration;
   });
 
   document.getElementById('contain-video').addEventListener('fullscreenchange', (event) => {
     setCloseFullScreen();
   });
+  
+  watch(() => route.query.episode, async () => {
+    if(!isNil(route.query.episode)){
+      await getProgressStatus();
+      await getVideoEpisode();
+
+      //restore
+      notSaveProgress.value = false;
+
+      console.log(startedWs, failedWs);
+      if(getAdmin())
+        room.value.emit('changeSource');
+
+      
+      let vid = document.getElementById("my-video");
+      vid.src = getUrl(data.value.episodePath);
+    }
+  }, {immediate: true})
 })
+
+function setCurrentPositionVideo(time, reusume = false, broadcast = false){
+  var vid = document.getElementById("my-video");
+  vid.currentTime = time;
+  currentPositionDuration.value = time;
+
+  if(broadcast && !isNil(route.query.idroom) ){
+    setTimeout(() => room.value.emit('time', vid.currentTime), 250);
+  }
+
+  if(reusume){
+    if(play.value)
+      setPlay();
+    setPlay();
+  }
+}
 
 onBeforeRouteLeave(async () => {
   stopWs();
@@ -255,6 +290,7 @@ onBeforeRouteLeave(async () => {
   window.removeEventListener("pagehide", leaving);
   window.removeEventListener("blur", leaving);
 })
+
 //computed
 const getPreviousEpisode = computed(() => {
   if (episodes.value.length <= 0)
@@ -289,27 +325,6 @@ watch(failedWs, () => {
   }
 })
 
-watch(time, () => {
-  var vid = document.getElementById("my-video");
-  vid.currentTime = time.value
-})
-
-watch(() => route.query.episode, async () => {
-  await getProgressStatus();
-  await getVideoEpisode();
-
-  //restore
-  notSaveProgress.value = false;
-
-  console.log(startedWs, failedWs);
-  if(getAdmin())
-    room.value.emit('changeSource');
-
-  
-  let vid = document.getElementById("my-video");
-  vid.src = getUrl(data.value.episodePath);
-})
-
 //functions
 function openDialogCertificate(url){
     actionCertificate.value = () => {
@@ -340,9 +355,7 @@ async function leaving() {
 
 async function saveStatusProgress() {
   if (!isNil(store.getUser) && notSaveProgress.value === false) {
-    let vid = document.getElementById("my-video");
-
-    let currentSeconds = vid.currentTime;
+    let currentSeconds = currentPositionDuration.value;
     progress.value.hours = Math.floor(currentSeconds / 3600);
     currentSeconds -= progress.value.hours * 3600;
 
@@ -352,7 +365,10 @@ async function saveStatusProgress() {
     progress.value.seconds = Math.floor(currentSeconds);
     progress.value.nameEpisode = route.query.episode;
 
-    progress.value = await saveProgress('video', progress.value)
+    await apiAsync(
+      saveProgress('video', progress.value),
+      (data) => progress.value = data
+    )
   }
 }
 
@@ -381,15 +397,15 @@ function startCoreWs() {
         idRoom.value = data.room.id_room
       
       users.value = data.room.clients
-      time.value = data.room.t
-      
+
+      setCurrentPositionVideo(data.room.t);
       setPause(data.room.pause);
 
       
       if(isNil(episodes.value) && users.value[0].nickname === currentUser.value)
         getVideoEpisode();
 
-      if(!isNil(data.room.episode) && route.query.episode !== data.room.episode)
+      if(!isNil(data.room.episode) && (route.query.episode !== data.room.episode || isNil(route.query.episode)))
       {
         router.push({
           path: route.fullPath,
@@ -476,11 +492,18 @@ function sendMessage(setAction, data) {
 }
 
 async function getVideoEpisode() {
-  //get api internal
-  data.value = await getRegister('video', route.query.episode);
+  
+  await apiAsync(
+    getRegister('video', route.query.episode),
+    (rs) => data.value = rs
+  );
 
-  if (isNil(route.query.idroom) || getAdmin())
-    episodes.value = await getStatus('video', route.query.name);
+  if (isNil(route.query.idroom) || getAdmin()){
+    await apiAsync(
+      getStatus('video', route.query.name),
+      (data) => episodes.value = data
+    )
+  }
   
   if(!isNil(progress.value))
   {
@@ -494,19 +517,21 @@ async function getVideoEpisode() {
 
 async function getProgressStatus() {
   if (!isNil(store.getUser)) {
-    try {
-      progress.value = await getProgress('video', route.query.name, store.getUser?.username, route.query.nameCfg);
-    } catch {
-      progress.value = {
-        nameCfg: route.query.nameCfg,
-        name: route.query.name,
-        nameEpisode: route.query.episode,
-        username: store.getUser?.username,
-        hours: 0,
-        minutes: 0,
-        seconds: 0
+    await apiAsync(
+      getProgress('video', route.query.name, store.getUser?.username, route.query.nameCfg),
+      (data) => progress.value = data,
+      () => {
+        progress.value = {
+          nameCfg: route.query.nameCfg,
+          name: route.query.name,
+          nameEpisode: route.query.episode,
+          username: store.getUser?.username,
+          hours: 0,
+          minutes: 0,
+          seconds: 0
+        }
       }
-    }
+    );
   }
 }
 
@@ -540,6 +565,7 @@ function setPlay(){
     vid.pause();
     setTimeout(() => room.value.emit('time', vid.currentTime), 250);
   }else{
+    vid.currentTime = currentPositionDuration.value;
     vid.play();
   }
 
@@ -602,10 +628,6 @@ function setShowControls(){
 function setCloseFullScreen(){
   clearTimeout(tokenShowControls.value);
   showControls.value = true;
-}
-
-function changePosition(value){
-  time.value = value;
 }
 
 const maxDurationLabel = computed(() => DateTime.fromSeconds(maxDuration.value, {zone: 'utc'}).toLocaleString(DateTime.TIME_24_WITH_SECONDS));
