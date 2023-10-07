@@ -38,7 +38,7 @@
               hide-details="true"
               v-model="volume"
               color="white"
-              step="0.1"
+              step="0.01"
               max="1"
             >
               <template v-slot:prepend>
@@ -155,13 +155,12 @@
     textBtn="Open"
     :actionButton="actionCertificate"
   />
-  <Toaster position="bottom-right" />
 </template>
 
 <script setup>
 import {DateTime} from 'luxon';
 
-const { $toast } = useNuxtApp()
+const { $emit } = useNuxtApp()
 const store = useStore();
 
 const runtimeConfig = useRuntimeConfig();
@@ -190,7 +189,7 @@ const ignoreAlertRewriteProcess = ref(false);
 
 //player
 const play = ref(false);
-const volume = ref(1);
+const volume = ref(0.25);
 const muted = ref(false);
 const fullScreen = ref(false);
 const showControls = ref(true);
@@ -389,7 +388,7 @@ function startCoreWs() {
         else if(data.message.type === 'changeSource')
           message = `${data.message.nickname} has change episode`;
 
-        $toast(message);
+        $emit('api:message', {title: 'WS say', message});
       }
 
       //update info general
