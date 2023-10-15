@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export default function useApi(){
+export default function useApi() {
     const { $emit } = useNuxtApp();
 
     const TIMEOUT = 60000;
@@ -18,8 +18,8 @@ export default function useApi(){
         try {
             rs = await functionApi;
 
-            if (!isNil(functionThen)){
-                if(returnAllObject)
+            if (!isNil(functionThen)) {
+                if (returnAllObject)
                     await functionThen(rs);
                 else
                     await functionThen(rs.data);
@@ -53,121 +53,130 @@ export default function useApi(){
     }
 
     //generic
-    async function getCfg(){
-        return await axios.get(`/api/schemas`, {timeout: TIMEOUT});
+    async function getCfg() {
+        return await axios.get(`/api/schemas`, { timeout: TIMEOUT });
     }
 
-    async function getAll(username = null){
-        return await axios.get(`/api/all`, {params:{username}, timeout: TIMEOUT});
+    async function getAll(params) {
+        return await axios.get(`/api/all`, { params, timeout: TIMEOUT });
     }
 
-    async function getAllWatchList(username){
-        return await axios.get(`/api/search-watchlist`, {params: {username},timeout: TIMEOUT});
+    async function getAllWatchList(params) {
+        return await axios.get(`/api/search-watchlist`, { params, timeout: TIMEOUT });
     }
 
-    async function searchDynamic(type, name, nameCfg){
-        return await axios.get(`/api/search-dynamic`, {params: {type, name, nameCfg}, timeout: TIMEOUT});
+    async function searchDynamic(params) {
+        return await axios.get(`/api/search-dynamic`, { params, timeout: TIMEOUT });
     }
 
-    async function searchLocal(name, username = null){
-        return await axios.get(`/api/search-local`, {params: {name, username}, timeout: TIMEOUT});
+    async function searchLocal(params) {
+        return await axios.get(`/api/search-local`, { params, timeout: TIMEOUT });
+    }
+
+    async function getByName(params, type) {
+        if (type === 'video')
+            return await axios.get(`/api/anime/get`, { params, timeout: TIMEOUT });
+        else
+            return await axios.get(`/api/manga/get`, { params, timeout: TIMEOUT });
     }
     
-    async function getByName(type, name, nameCfg){
-        let result;
-
-        if(type === 'video')
-           return await axios.get(`/api/anime/get`, {params:{name, nameCfg}, timeout: TIMEOUT});
+    async function findQueue(params, type) {
+        if (type === 'video')
+            return await axios.get(`/api/anime/queue`, { params, timeout: TIMEOUT });
         else
-            return await axios.get(`/api/manga/get`, {params:{name, nameCfg}, timeout: TIMEOUT});
+            return await axios.get(`/api/manga/queue`, { params, timeout: TIMEOUT });
+    }
+    
+    async function getAllQueue(params, type) {
+        if (type === 'video')
+            return await axios.get(`/api/anime/all-queue`, { params, timeout: TIMEOUT });
+        else
+            return await axios.get(`/api/manga/all-queue`, { params, timeout: TIMEOUT });
     }
 
-    async function downloadContent(type, url, nameCfg){
-        let result, body = {
-            url,
-            nameCfg
-        }
-
-        if(type === 'video')
-            return await axios.post(`/api/anime/download`, body, {timeout: TIMEOUT});
+    async function removeQueue(params, data, type) {
+        if (type === 'video')
+            return await axios.delete(`/api/anime/queue`, { params, data, timeout: TIMEOUT });
         else
-            return await axios.post(`/api/manga/download`, body, {timeout: TIMEOUT});
+            return await axios.delete(`/api/manga/queue`, { params, data, timeout: TIMEOUT });
     }
 
-    async function reDownloadContent(type, name){
-        let result;
-
-        if(type === 'video')
-            return await axios.put(`/api/anime/redownload`, null, {params:{name}, timeout: TIMEOUT});
+    async function requestDownloadContent(params, data, type) {
+        if (type === 'video')
+            return await axios.put(`/api/anime/request-queue`, data, { params, timeout: TIMEOUT });
         else
-            return await axios.put(`/api/manga/redownload`, null, {params:{name}, timeout: TIMEOUT});
+            return await axios.put(`/api/manga/request-queue`, data, { params, timeout: TIMEOUT });
     }
 
-    async function removeContent(type, name, nameCfg){
-        let result;
-
-        if(type === 'video')
-            return await axios.delete(`/api/anime/delete`, {params:{name, nameCfg}, timeout: TIMEOUT});
+    async function downloadContent(params, data, type) {
+        if (type === 'video')
+            return await axios.post(`/api/anime/download`, data, { params, timeout: TIMEOUT });
         else
-            return await axios.delete(`/api/manga/delete`, {params:{name, nameCfg}, timeout: TIMEOUT});
+            return await axios.post(`/api/manga/download`, data, { params, timeout: TIMEOUT });
     }
 
-    async function getStatus(type, name){
-        let result;
-
-        if(type === 'video')
-            return await axios.get(`/api/anime/episode`, {params:{name}, timeout: TIMEOUT});
+    async function reDownloadContent(params, data, type) {
+        if (type === 'video')
+            return await axios.put(`/api/anime/redownload`, data, { params, timeout: TIMEOUT });
         else
-            return await axios.get(`/api/manga/chapter`, {params:{name}, timeout: TIMEOUT});
+            return await axios.put(`/api/manga/redownload`, data, { params, timeout: TIMEOUT });
     }
 
-    async function getProgress(type, name, username, nameCfg){
-        let result;
-
-        if(type === 'video')
-            return await axios.get(`/api/anime/progress`, {params:{name, username, nameCfg}, timeout: TIMEOUT});
+    async function removeContent(params, data, type) {
+        if (type === 'video')
+            return await axios.delete(`/api/anime/delete`, { params, data, timeout: TIMEOUT });
         else
-            return await axios.get(`/api/manga/progress`, {params:{name, username, nameCfg}, timeout: TIMEOUT});
+            return await axios.delete(`/api/manga/delete`, { params, data, timeout: TIMEOUT });
     }
 
-    async function saveProgress(type, body = null){
-        let result;
-
-        if(type === 'video')
-            return await axios.put(`/api/anime/progress`, body, {timeout: TIMEOUT});
+    async function getStatus(params, type) {
+        if (type === 'video')
+            return await axios.get(`/api/anime/episode`, { params, timeout: TIMEOUT });
         else
-            return await axios.put(`/api/manga/progress`, body, {timeout: TIMEOUT});
+            return await axios.get(`/api/manga/chapter`, { params, timeout: TIMEOUT });
+    }
+
+    async function getProgress(params, type) {
+        if (type === 'video')
+            return await axios.get(`/api/anime/progress`, { params, timeout: TIMEOUT });
+        else
+            return await axios.get(`/api/manga/progress`, { params, timeout: TIMEOUT });
+    }
+
+    async function saveProgress(params, data, type) {
+        if (type === 'video')
+            return await axios.put(`/api/anime/progress`, data, { params, timeout: TIMEOUT });
+        else
+            return await axios.put(`/api/manga/progress`, data, { params, timeout: TIMEOUT });
     }
 
 
     //account
-    async function login(body){
-        return await axios.post(`/api/account/login`, body, {timeout: TIMEOUT});
+    async function login(data) {
+        return await axios.post(`/api/account/login`, data, { timeout: TIMEOUT });
     }
 
-    async function getRegister(type, id){
-        let result;
-
-        if(type === 'video')
-            return await axios.get(`/api/anime/register`, {params:{id},timeout: TIMEOUT});
+    async function getRegister(params, type) {
+        if (type === 'video')
+            return await axios.get(`/api/anime/register`, { params, timeout: TIMEOUT });
         else
-            return await axios.get(`/api/manga/register`, {params:{id},timeout: TIMEOUT});
+            return await axios.get(`/api/manga/register`, { params, timeout: TIMEOUT });
     }
 
-    async function registerAccount(username, password){
-        return await axios.post(`/api/account/register`, {username, password}, {timeout: TIMEOUT});
+    async function registerAccount(params, data) {
+        return await axios.post(`/api/account/register`, data, { params, timeout: TIMEOUT });
     }
 
     //watchlist
-    async function addWatchList(username, name, nameCfg){
-        return await axios.post(`/api/account/watchlist`, {username, name, nameCfg}, {timeout: TIMEOUT});
+    async function addWatchList(params, data) {
+        return await axios.post(`/api/account/watchlist`, data, { params, timeout: TIMEOUT });
     }
 
-    async function removeWatchList(username, name, nameCfg){
-        return await axios.delete(`/api/account/watchlist`, {body: {username, name, nameCfg}, timeout: TIMEOUT});
+    async function removeWatchList(params, data) {
+        return await axios.delete(`/api/account/watchlist`, { params, data, timeout: TIMEOUT });
     }
-    
-    return{
+
+    return {
         apiAsync,
         getAll,
         getCfg,
@@ -175,6 +184,10 @@ export default function useApi(){
         searchLocal,
         getByName,
         downloadContent,
+        findQueue,
+        requestDownloadContent,
+        getAllQueue,
+        removeQueue,
         reDownloadContent,
         removeContent,
         getStatus,

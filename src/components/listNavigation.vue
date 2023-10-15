@@ -117,6 +117,15 @@ const listItems = computed(() => {
       icon: '$logout',
       route: '/auth/logout'
     })
+
+    if(useGet(store.getUser, 'role', 0) === 100){
+      items.push({
+        id:'queue',
+        text:'request',
+        icon: '$request',
+        route: '/queue'
+      })
+    }
   }else{
     items.push({
       id:'login',

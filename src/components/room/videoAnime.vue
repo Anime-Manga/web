@@ -80,9 +80,11 @@
 
     <div class="d-flex justify-center" style="width: 100%">
       <template v-if="isNil(startedWs) || startedWs === false">
-        <v-btn color="warning" @click="startCoreWs()">
-          Create room
-        </v-btn>
+        <v-badge content="alpha" color="secondary">
+          <v-btn color="warning" @click="startCoreWs()">
+            Create room
+          </v-btn>
+        </v-badge>
       </template>
       <div v-else class="d-flex flex-wrap justify-center align-center">
         <div v-for="(user, index) in users" class="ma-3">
@@ -270,10 +272,6 @@ function setCurrentPositionVideo(time, reusume = false, broadcast = false){
   vid.currentTime = time;
   currentPositionDuration.value = time;
 
-  if(broadcast && !isNil(route.query.idroom) ){
-    setTimeout(() => room.value.emit('time', vid.currentTime), 250);
-  }
-
   if(reusume){
     if(play.value)
       setPlay();
@@ -365,7 +363,7 @@ async function saveStatusProgress() {
     progress.value.nameEpisode = route.query.episode;
 
     await apiAsync(
-      saveProgress('video', progress.value),
+      saveProgress(null, progress.value, 'video'),
       (data) => progress.value = data
     )
   }
@@ -493,13 +491,17 @@ function sendMessage(setAction, data) {
 async function getVideoEpisode() {
   
   await apiAsync(
-    getRegister('video', route.query.episode),
+    getRegister({
+      id: route.query.episode
+    }, 'video'),
     (rs) => data.value = rs
   );
 
   if (isNil(route.query.idroom) || getAdmin()){
     await apiAsync(
-      getStatus('video', route.query.name),
+      getStatus({
+        name: route.query.name
+      }, 'video'),
       (data) => episodes.value = data
     )
   }
@@ -517,7 +519,11 @@ async function getVideoEpisode() {
 async function getProgressStatus() {
   if (!isNil(store.getUser)) {
     await apiAsync(
-      getProgress('video', route.query.name, store.getUser?.username, route.query.nameCfg),
+      getProgress({
+        name: route.query.name,
+        username: store.getUser?.username,
+        nameCfg: route.query.nameCfg
+      }, 'video'),
       (data) => progress.value = data,
       () => {
         progress.value = {

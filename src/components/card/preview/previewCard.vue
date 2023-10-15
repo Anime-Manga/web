@@ -87,7 +87,10 @@ async function details() {
     const {nameCfg} = store.getSchemasBySelectSearch
 
     await apiAsync(
-      getByName(item.value.typeView, item.value.name, nameCfg),
+      getByName({
+        name: item.value.name,
+        nameCfg
+      }, item.value.typeView),
       (rs) => data.value = rs
     )
   }

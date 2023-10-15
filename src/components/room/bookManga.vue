@@ -196,6 +196,7 @@ import _ from 'lodash'
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
+const store = useStore();
 const {getRegister, getStatus, saveProgress, getProgress, apiAsync} = useApi();
 
 //env
@@ -357,7 +358,7 @@ async function saveStatusProgress(page = indexPage){
     progress.value.nameChapter = data.value.chapterId;
 
     await apiAsync(
-      saveProgress('book', progress.value),
+      saveProgress(null, progress.value, 'book'),
       (data) => progress.value = data
     );
   }
@@ -454,7 +455,11 @@ async function load() {
   if(!isNil(store.getUser))
   {
     await apiAsync(
-      getProgress('book', route.query.name, store.getUser?.username, route.query.nameCfg),
+      getProgress({
+        name: route.query.name,
+        username: store.getUser?.username,
+        nameCfg: route.query.nameCfg
+      }, 'book'),
       (data) => progress.value = data,
       () => {
         progress.value = {
@@ -474,12 +479,16 @@ async function load() {
     indexPage.value = 0;
   
   await apiAsync(
-    getRegister('book', route.query.chapter),
+    getRegister({
+      id: route.query.chapter
+    }, 'book'),
     (rs) => data.value = rs
   )
 
   await apiAsync(
-    getStatus('book', route.query.name),
+    getStatus({
+      name: route.query.name
+    }, 'book'),
     (data) => chapters.value = data
   );
   

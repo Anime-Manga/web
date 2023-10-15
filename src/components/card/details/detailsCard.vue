@@ -23,70 +23,39 @@
         <template
             v-if="!isNil(item.urlPageDownload)"
         >
-          <v-btn
+          <template v-if="useGet(store.getUser, 'role', 0) === 100">
+            <ButtonLoading
+              :action="download"
               color="warning"
-              @click="download()"
-          >
-            <template
-              v-if="isLoadingDownload"
-            >
-              <v-progress-circular
-                  indeterminate
-                  size="25"
-              />
-            </template>
-            <template
-              v-else
-            >
-              <v-icon>
-                $download
-              </v-icon>
-            </template>
-          </v-btn>
+              icon="$download"
+            />
+          </template>
+          <template v-else>
+            <ButtonRequestDownload
+              :url="item.urlPageDownload"
+              :nameCfg="store.getSchemasBySelectSearch.nameCfg"
+              :type="item.type"
+            />
+          </template>
         </template>
         <template v-else>
-          <v-btn
+          <ButtonLoading
+              :action="reDownload"
               color="warning"
+              icon="$redownload"
               class="mr-1"
-              @click="reDownload()"
-          >
-            <template v-if="isLoadingReDownload">
-              <v-progress-circular
-                indeterminate
-              />
-            </template>
-            <template
-              v-else
-            >
-              <v-icon>
-                $redownload
-              </v-icon>
-            </template>
-          </v-btn>
-          <v-btn
+            />
+          <ButtonLoading
+              :action="remove"
               color="error"
-              @click="remove()"
-          >
-            <template v-if="isLoadingDelete">
-              <v-progress-circular
-                indeterminate
-              />
-            </template>
-            <template v-else>
-              <v-icon>
-                $trash
-              </v-icon>
-            </template>
-          </v-btn>
+              icon="$trash"
+            />
           <template v-if="!isNil(store.getUser) || !isNil(item.watchList)">
-            <v-btn
+            <ButtonLoading
+                :action="() => setWatchList(item.watchList)"
                 color="info ml-1"
-                @click="setWatchList(item.watchList)"
-            >
-              <v-icon>
-                {{item.watchList? '$saved' : '$notSaved'}}
-              </v-icon>
-            </v-btn>
+                :icon="item.watchList? '$saved' : '$notSaved'"
+              />
           </template>
         </template>
       </v-card-item>
@@ -148,7 +117,6 @@ const {item} = toRefs(props);
 
 //variables
 const activator = ref(true);
-const isLoadingDownload = ref(false);
 const isLoadingReDownload = ref(false);
 const isLoadingDelete = ref(false);
 const error = ref(null);
@@ -164,26 +132,31 @@ watch(date, () => {
     {
       tokenStatus.value = setTimeout(async () => {
         await apiAsync(
-          getStatus(item.value.type, item.value.name_id, item.value.nameCfg),
+          getStatus({
+            name: item.value.name_id
+          }, item.value.type),
           (data) => contents.value = data,
           null,
-          () => date.value = new Date()
+          () => date.value = new Date(),
+          null,
+          true
         );
       }, 1000);
     }
 }, {immediate: true})
 
-
 async function download(){
-  isLoadingDownload.value = true;
-  
   let schema = store.getSchemasBySelectSearch;
 
   await apiAsync(
-    downloadContent(item.value.type, item.value.urlPageDownload, schema.nameCfg),
+    downloadContent({
+      username: store.getUser?.username
+    },{
+      url: item.value.urlPageDownload,
+      nameCfg: schema.nameCfg
+    }, item.value.type),
     (data) => emit('updateData', data),
     () => error.value = `Impossible send request for download this ${item.value.urlPageDownload}`,
-    () => isLoadingDownload.value = false
   );
 }
 
@@ -192,7 +165,10 @@ async function reDownload(){
   error.value = null;
 
   await apiAsync(
-    reDownloadContent(item.value.type, item.value.name_id),
+    reDownloadContent({
+      name: item.value.name_id,
+      username: store.getUser?.username
+    }, null, item.value.type),
     null,
     () => error.value = `Impossible send request for re-download this ${item.value.urlPageDownload}`,
     () => isLoadingReDownload.value = false
@@ -204,7 +180,10 @@ async function remove(){
   error.value = null;
 
   await apiAsync(
-    removeContent(item.value.type, item.value.name_id, item.value.nameCfg),
+    removeContent({
+      name: item.value.name_id,
+      nameCfg: item.value.nameCfg
+    }, null, item.value.type),
     () => {
       clearTimeout(tokenStatus.value);
       closeAndUpdate();
@@ -224,14 +203,21 @@ function close(){
 
 async function setWatchList(state){
   let username = store.getUser?.username;
-
   if(state === true){
     await apiAsync(
-      removeWatchList(username, item.value.name_id, item.value.nameCfg)
+      removeWatchList(null, {
+        username,
+        name: item.value.name_id,
+        nameCfg: item.value.nameCfg
+      })
     )
   }else{
     await apiAsync(
-      addWatchList(username, item.value.name_id, item.value.nameCfg)
+      addWatchList(null, {
+        username,
+        name: item.value.name_id,
+        nameCfg: item.value.nameCfg
+      })
     )
   }
 

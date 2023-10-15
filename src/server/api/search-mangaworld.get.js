@@ -5,10 +5,10 @@ const runtimeConfig = useRuntimeConfig();
 const API_BASE = runtimeConfig.apiBase;
 
 export default defineEventHandler(async (event) => {
-    const {search} = getQuery(event)
+    const {search, ...params} = getQuery(event)
 
     try{
-        return (await axios.get(`${API_BASE}/manga/list/name/${search}`)).data;
+        return (await axios.get(`${API_BASE}/manga/list/name/${search}`, {params})).data;
     }catch(err){
         throw createError({ statusCode: err.response.status, statusMessage: err.response.statusText })
     }

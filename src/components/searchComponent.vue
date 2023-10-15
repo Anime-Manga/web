@@ -168,7 +168,9 @@ async function clickSearch() {
   switch (typeSearch.value) {
     case 'all':
       await apiAsync(
-        getAll(store.getUser?.username),
+        getAll({
+          username: store.getUser?.username
+        }),
         (rs) => data.value = rs,
         (err) => {
           if(err.response?.status === 404)
@@ -178,7 +180,10 @@ async function clickSearch() {
       break;
     case "local":
       await apiAsync(
-        searchLocal(search.value, store.getUser?.username),
+        searchLocal({
+          name: search.value,
+          username: store.getUser?.username
+        }),
         (rs) => data.value = rs,
         (err) => {
           if(err.response?.status === 404)
@@ -188,7 +193,9 @@ async function clickSearch() {
       break;
     case "search-watchlist":
       await apiAsync(
-        getAllWatchList(store.getUser?.username),
+        getAllWatchList({
+          username: store.getUser?.username
+        }),
         (rs) => data.value = rs,
         (err) => {
           if(err.response?.status === 404)
@@ -199,7 +206,11 @@ async function clickSearch() {
     default:
       const schema = store.getSchemasBySelectSearch;
       await apiAsync(
-        searchDynamic(schema.type, search.value, schema.nameCfg),
+        searchDynamic({
+          type: schema.type,
+          name: search.value,
+          nameCfg: schema.nameCfg
+        }),
         (rs) => data.value = rs,
         (err) => {
           if(err.response?.status === 404)

@@ -104,7 +104,10 @@ async function register(){
   }
   
   await apiAsync(
-    registerAccount(username.value, password.value),
+    registerAccount(null, {
+      username: username.value,
+      password: password.value
+    }),
     () => navigateTo('/auth/login'),
     (err) => {
       if(err.toString().indexOf('409') !== -1)

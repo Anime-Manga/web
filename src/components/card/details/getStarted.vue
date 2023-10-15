@@ -117,7 +117,11 @@ async function setProgress(){
   if(!isNil(store.getUser) && isNil(item.value.urlPageDownload))
   {
     await apiAsync(
-      getProgress(item.value.type, item.value.name_id, store.getUser?.username, item.value.nameCfg),
+      getProgress({
+        name: item.value.name_id,
+        username: store.getUser?.username,
+        nameCfg: item.value.nameCfg
+      }, item.value.type),
       (data) => {
         progressTracker.value = data
         foundProgress.value = true;
