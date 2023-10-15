@@ -489,7 +489,11 @@ async function load() {
     getStatus({
       name: route.query.name
     }, 'book'),
-    (data) => chapters.value = data
+    (data) => chapters.value = data,
+      null,
+      null,
+      null,
+      true
   );
   
   if(!isNil(progress.value))

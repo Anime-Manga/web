@@ -129,7 +129,10 @@ async function setProgress(){
       (err) => {
         if(err.response.status === 404)
           foundProgress.value = false;
-      }
+      },
+      null,
+      null,
+      true
     )
   }
 }

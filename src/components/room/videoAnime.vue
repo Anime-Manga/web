@@ -502,7 +502,11 @@ async function getVideoEpisode() {
       getStatus({
         name: route.query.name
       }, 'video'),
-      (data) => episodes.value = data
+      (data) => episodes.value = data,
+      null,
+      null,
+      null,
+      true
     )
   }
   

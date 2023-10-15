@@ -8,6 +8,9 @@
                 <thead>
                     <tr>
                         <th class="text-left">
+                            Name
+                        </th>
+                        <th class="text-left">
                             Url
                         </th>
                         <th class="text-left">
@@ -23,6 +26,7 @@
                         v-for="item in listQueueAnime"
                         :key="item.name"
                     >
+                        <td>{{ item.name }}</td>
                         <td>{{ item.url }}</td>
                         <td>{{ item.nameCfg }}</td>
                         <td class="text-center">
@@ -34,14 +38,14 @@
                             />
                             <ButtonLoading
                                 color="error"
-                                :action="() => reject(item.url, item.nameCfg, 'video')"
+                                :action="() => reject(item.name, item.url, item.nameCfg, 'video')"
                                 icon="$x"
                                 class="mr-1"
                             />
                             <ButtonLoading
                                 color="black"
                                 icon="$blacklist"
-                                :action="() => null"
+                                :action="() => addToBlackList(item.name, item.url, item.nameCfg, 'video')"
                             />
                         </td>
                     </tr>
@@ -55,6 +59,9 @@
             >
                 <thead>
                     <tr>
+                        <th class="text-left">
+                            Name
+                        </th>
                         <th class="text-left">
                             Url
                         </th>
@@ -71,6 +78,7 @@
                         v-for="item in listQueueManga"
                         :key="item.name"
                     >
+                        <td>{{ item.name }}</td>
                         <td>{{ item.url }}</td>
                         <td>{{ item.nameCfg }}</td>
                         <td class="text-center">
@@ -82,14 +90,14 @@
                             />
                             <ButtonLoading
                                 color="error"
-                                :action="() => reject(item.url, item.nameCfg, 'book')"
+                                :action="() => reject(item.name, item.url, item.nameCfg, 'book')"
                                 icon="$x"
                                 class="mr-1"
                             />
                             <ButtonLoading
                                 color="black"
                                 icon="$blacklist"
-                                :action="() => null"
+                                :action="() => addToBlackList(item.name, item.url, item.nameCfg, 'book')"
                             />
                         </td>
                     </tr>
@@ -103,7 +111,7 @@
 import { isNil } from 'lodash';
 
 const store = useStore();
-const {apiAsync, getAllQueue, downloadContent, removeQueue} = useApi();
+const {apiAsync, getAllQueue, downloadContent, removeQueue, blackList} = useApi();
 
 const listQueueAnime = ref([]);
 const listQueueManga = ref([]);
@@ -154,9 +162,21 @@ async function accept(url, nameCfg, type){
     )
 }
 
-async function reject(url, nameCfg, type){
+async function reject(name, url, nameCfg, type){
     await apiAsync(
         removeQueue(null, {
+            name,
+            nameCfg,
+            url
+        }, type),
+        () => time.value = Date.now()
+    )
+}
+
+async function addToBlackList(name, url, nameCfg, type){
+    await apiAsync(
+        blackList(null, {
+            name,
             nameCfg,
             url
         }, type),

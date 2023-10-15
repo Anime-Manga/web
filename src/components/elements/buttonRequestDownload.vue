@@ -10,6 +10,9 @@
 
 <script setup>
 const props = defineProps({
+    name:{
+        type: String
+    },
     url:{
         type: String
     },
@@ -19,7 +22,7 @@ const props = defineProps({
     type: String
 })
 
-const { url, nameCfg, type } = toRefs(props);
+const { name, url, nameCfg, type } = toRefs(props);
 
 const btnDisabled = ref(false);
 const loading = ref(true);
@@ -30,6 +33,7 @@ async function checkQueue(){
     loading.value = true;
     await apiAsync(
         findQueue({
+            name: name.value,
             url: url.value,
             nameCfg: nameCfg.value
         }, type.value),
@@ -45,10 +49,16 @@ async function checkQueue(){
 async function sendRequestQueue(){
     await apiAsync(
         requestDownloadContent(null, {
+            name: name.value,
             url: url.value,
             nameCfg: nameCfg.value
         }, type.value),
-        () => btnDisabled.value = true
+        () => btnDisabled.value = true,
+        null,
+        null,
+        {
+            200: 'The request has been sent! Please wait a few moments, thanks'
+        }
     )
 }
 

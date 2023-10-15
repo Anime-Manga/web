@@ -32,6 +32,7 @@
           </template>
           <template v-else>
             <ButtonRequestDownload
+              :name="item.name"
               :url="item.urlPageDownload"
               :nameCfg="store.getSchemasBySelectSearch.nameCfg"
               :type="item.type"
@@ -39,17 +40,21 @@
           </template>
         </template>
         <template v-else>
-          <ButtonLoading
-              :action="reDownload"
-              color="warning"
-              icon="$redownload"
-              class="mr-1"
-            />
-          <ButtonLoading
-              :action="remove"
-              color="error"
-              icon="$trash"
-            />
+            
+          <template v-if="useGet(store.getUser, 'role', 0) === 100">
+            <ButtonLoading
+                :action="reDownload"
+                color="warning"
+                icon="$redownload"
+                class="mr-1"
+              />
+
+            <ButtonLoading
+                :action="remove"
+                color="error"
+                icon="$trash"
+              />
+          </template>
           <template v-if="!isNil(store.getUser) || !isNil(item.watchList)">
             <ButtonLoading
                 :action="() => setWatchList(item.watchList)"
@@ -182,7 +187,8 @@ async function remove(){
   await apiAsync(
     removeContent({
       name: item.value.name_id,
-      nameCfg: item.value.nameCfg
+      nameCfg: item.value.nameCfg,
+      username: store.getUser?.username
     }, null, item.value.type),
     () => {
       clearTimeout(tokenStatus.value);

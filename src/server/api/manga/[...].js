@@ -121,6 +121,16 @@ router.delete('/queue', defineEventHandler(async (event) => {
     }
 }))
 
+router.put('/blacklist', defineEventHandler(async (event) => {
+    const params = getQuery(event);
+    const data = await readBody(event);
+
+    try{
+        return (await axios.put(`${API_BASE}/chapter/blacklist`, data, {params})).data;
+    }catch(err){
+        throw createError({ statusCode: err.response.status, statusMessage: err.response.statusText })
+    }
+}))
 
 router.get('/register', defineEventHandler(async (event) => {
     const {id, ...params} = getQuery(event);

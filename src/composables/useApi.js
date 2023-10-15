@@ -108,6 +108,13 @@ export default function useApi() {
             return await axios.put(`/api/manga/request-queue`, data, { params, timeout: TIMEOUT });
     }
 
+    async function blackList(params, data, type) {
+        if (type === 'video')
+            return await axios.put(`/api/anime/blacklist`, data, { params, timeout: TIMEOUT });
+        else
+            return await axios.put(`/api/manga/blacklist`, data, { params, timeout: TIMEOUT });
+    }
+
     async function downloadContent(params, data, type) {
         if (type === 'video')
             return await axios.post(`/api/anime/download`, data, { params, timeout: TIMEOUT });
@@ -186,6 +193,7 @@ export default function useApi() {
         downloadContent,
         findQueue,
         requestDownloadContent,
+        blackList,
         getAllQueue,
         removeQueue,
         reDownloadContent,
