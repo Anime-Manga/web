@@ -23,70 +23,44 @@
         <template
             v-if="!isNil(item.urlPageDownload)"
         >
-          <v-btn
+          <template v-if="useGet(store.getUser, 'role', 0) === 100">
+            <ButtonLoading
+              :action="download"
               color="warning"
-              @click="download()"
-          >
-            <template
-              v-if="isLoadingDownload"
-            >
-              <v-progress-circular
-                  indeterminate
-                  size="25"
-              />
-            </template>
-            <template
-              v-else
-            >
-              <v-icon>
-                $download
-              </v-icon>
-            </template>
-          </v-btn>
+              icon="$download"
+            />
+          </template>
+          <template v-else>
+            <ButtonRequestDownload
+              :name="item.name"
+              :url="item.urlPageDownload"
+              :nameCfg="store.getSchemasBySelectSearch.nameCfg"
+              :type="item.type"
+            />
+          </template>
         </template>
         <template v-else>
-          <v-btn
-              color="warning"
-              class="mr-1"
-              @click="reDownload()"
-          >
-            <template v-if="isLoadingReDownload">
-              <v-progress-circular
-                indeterminate
+            
+          <template v-if="useGet(store.getUser, 'role', 0) === 100">
+            <ButtonLoading
+                :action="reDownload"
+                color="warning"
+                icon="$redownload"
+                class="mr-1"
               />
-            </template>
-            <template
-              v-else
-            >
-              <v-icon>
-                $redownload
-              </v-icon>
-            </template>
-          </v-btn>
-          <v-btn
-              color="error"
-              @click="remove()"
-          >
-            <template v-if="isLoadingDelete">
-              <v-progress-circular
-                indeterminate
+
+            <ButtonLoading
+                :action="remove"
+                color="error"
+                icon="$trash"
               />
-            </template>
-            <template v-else>
-              <v-icon>
-                $trash
-              </v-icon>
-            </template>
-          </v-btn>
+          </template>
           <template v-if="!isNil(store.getUser) || !isNil(item.watchList)">
-            <v-btn
+            <ButtonLoading
+                :action="() => setWatchList(item.watchList)"
                 color="info ml-1"
-                @click="setWatchList(item.watchList)"
-            >
-              <v-icon>
-                {{item.watchList? '$saved' : '$notSaved'}}
-              </v-icon>
-            </v-btn>
+                :icon="item.watchList? '$saved' : '$notSaved'"
+              />
           </template>
         </template>
       </v-card-item>
@@ -133,7 +107,7 @@
 const store = useStore();
 
 //api
-const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus} = useApi();
+const {downloadContent, reDownloadContent, removeContent, addWatchList, removeWatchList, getStatus, apiAsync} = useApi();
 
 const emit = defineEmits(['closeDialog','closeDialogAndUpdate','updateData']);
 
@@ -148,12 +122,12 @@ const {item} = toRefs(props);
 
 //variables
 const activator = ref(true);
-const isLoadingDownload = ref(false);
 const isLoadingReDownload = ref(false);
 const isLoadingDelete = ref(false);
 const error = ref(null);
 const date = ref(null);
 const contents = ref(null);
+const tokenStatus = ref();
 
 
 watch(item, () => date.value = new Date());
@@ -161,61 +135,68 @@ watch(item, () => date.value = new Date());
 watch(date, () => {
   if(isNil(item.value.urlPageDownload))
     {
-      setTimeout(async () => {
-        try{
-          contents.value = await getStatus(item.value.type, item.value.name_id, item.value.nameCfg);
-        }catch(err){
-          console.log(err);
-        }finally{
-          date.value = new Date();
-        }
+      tokenStatus.value = setTimeout(async () => {
+        await apiAsync(
+          getStatus({
+            name: item.value.name_id
+          }, item.value.type),
+          (data) => contents.value = data,
+          null,
+          () => date.value = new Date(),
+          null,
+          true
+        );
       }, 1000);
     }
 }, {immediate: true})
 
-
 async function download(){
-  isLoadingDownload.value = true;
+  let schema = store.getSchemasBySelectSearch;
 
-  try{
-    let schema = store.getSchemasBySelectSearch;
-
-    let data = await downloadContent(item.value.type, item.value.urlPageDownload, schema.nameCfg);
-    emit('updateData', data);
-  }catch(err){
-    console.log(err);
-    error.value = `Impossible send request for download this ${item.value.urlPageDownload}`;
-  }finally{
-    isLoadingDownload.value = false;
-  }
+  await apiAsync(
+    downloadContent({
+      username: store.getUser?.username
+    },{
+      url: item.value.urlPageDownload,
+      nameCfg: schema.nameCfg
+    }, item.value.type),
+    (data) => emit('updateData', data),
+    () => error.value = `Impossible send request for download this ${item.value.urlPageDownload}`,
+  );
 }
 
 async function reDownload(){
   isLoadingReDownload.value = true;
   error.value = null;
 
-  try{
-    await reDownloadContent(item.value.type, item.value.name_id);
-  }catch{
-    error.value = `Impossible send request for re-download this ${item.value.urlPageDownload}`;
-  }finally{
-    isLoadingReDownload.value = false;
-  }
+  await apiAsync(
+    reDownloadContent({
+      name: item.value.name_id,
+      username: store.getUser?.username
+    }, null, item.value.type),
+    null,
+    () => error.value = `Impossible send request for re-download this ${item.value.urlPageDownload}`,
+    () => isLoadingReDownload.value = false
+  );
 }
 
 async function remove(){
   isLoadingDelete.value = true;
   error.value = null;
 
-  try{
-    await removeContent(item.value.type, item.value.name_id, item.value.nameCfg);
-    closeAndUpdate();
-  }catch(err){
-    console.log(err);
-    error.value = `Impossible send request for remove this ${item.value.urlPageDownload}`;
-  }finally{
-    isLoadingDelete.value = false;
-  }
+  await apiAsync(
+    removeContent({
+      name: item.value.name_id,
+      nameCfg: item.value.nameCfg,
+      username: store.getUser?.username
+    }, null, item.value.type),
+    () => {
+      clearTimeout(tokenStatus.value);
+      closeAndUpdate();
+    },
+    () => error.value = `Impossible send request for remove this ${item.value.urlPageDownload}`,
+    () => isLoadingDelete.value = false
+  );
 }
 
 function closeAndUpdate(){
@@ -228,14 +209,25 @@ function close(){
 
 async function setWatchList(state){
   let username = store.getUser?.username;
-  try {
-    if(state === true)
-      await removeWatchList(username, item.value.name_id, item.value.nameCfg);
-    else
-      await addWatchList(username, item.value.name_id, item.value.nameCfg);
+  if(state === true){
+    await apiAsync(
+      removeWatchList(null, {
+        username,
+        name: item.value.name_id,
+        nameCfg: item.value.nameCfg
+      })
+    )
+  }else{
+    await apiAsync(
+      addWatchList(null, {
+        username,
+        name: item.value.name_id,
+        nameCfg: item.value.nameCfg
+      })
+    )
+  }
 
-    item.value.watchList = !state;
-  }catch{}
+  item.value.watchList = !state;
 }
 </script>
 

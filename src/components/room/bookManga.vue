@@ -9,7 +9,7 @@
         <template v-if="!modeList">
           <div class="d-flex flex-row align-center justify-center">
             <div
-                v-if="indexPage > 0 && (!modeMobile)"
+                v-if="indexPage > 0 && (!modeMobile) && !loadingImage"
                 class="btn-page"
                 @click="previousPage"
             >
@@ -34,9 +34,9 @@
                   :src="getUrl()"
                   class="img-page pa-1"
                   @click="changePage"
-                  :onerror="openDialogCertificate(hostHTTP)"
+                  :onerror="() => openDialogCertificate(hostHTTP)"
               />
-              <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
+              <div v-if="loadingImage" class="d-flex align-center justify-center fill-height" style="overflow: hidden;">
                 <v-progress-circular
                     color="primary"
                     size="100"
@@ -46,7 +46,7 @@
               </div>
             </div>
             <div
-                v-if="data && indexPage < (data.chapterPath.length - 1) && (!modeMobile)"
+                v-if="data && indexPage < (data.chapterPath.length - 1) && (!modeMobile) && !loadingImage"
                 class="btn-page"
                 @click="nextPage"
             >
@@ -77,9 +77,9 @@
                 ref="imgBooks"
                 class="img-page"
                 v-show="!loadingImage"
-                :onerror="openDialogCertificate(hostHTTP)"
+                :onerror="() => openDialogCertificate(hostHTTP)"
             />
-            <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
+            <div v-if="loadingImage" class="d-flex align-center justify-center fill-height" style="overflow: hidden;">
               <v-progress-circular
                   bg-color="secondary"
                   color="primary"
@@ -196,7 +196,8 @@ import _ from 'lodash'
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const router = useRouter();
-const {getRegister, getStatus, saveProgress, getProgress} = useApi();
+const store = useStore();
+const {getRegister, getStatus, saveProgress, getProgress, apiAsync} = useApi();
 
 //env
 const data = ref(null)
@@ -355,7 +356,11 @@ async function saveStatusProgress(page = indexPage){
 
     progress.value.name = route.query.name;
     progress.value.nameChapter = data.value.chapterId;
-    progress.value = await saveProgress('book', progress.value)
+
+    await apiAsync(
+      saveProgress(null, progress.value, 'book'),
+      (data) => progress.value = data
+    );
   }
 }
 
@@ -449,38 +454,50 @@ function closeFullscreenMobile() {
 async function load() {
   if(!isNil(store.getUser))
   {
-    try{
-      progress.value = await getProgress('book', route.query.name, store.getUser?.username, route.query.nameCfg);
-    }catch{
-      progress.value = {
-        nameCfg: route.query.nameCfg,
+    await apiAsync(
+      getProgress({
         name: route.query.name,
-        nameChapter: route.query.name,
         username: store.getUser?.username,
-        page: 0
-      }
-    }
+        nameCfg: route.query.nameCfg
+      }, 'book'),
+      (data) => progress.value = data,
+      () => {
+        progress.value = {
+          nameCfg: route.query.nameCfg,
+          name: route.query.name,
+          nameChapter: route.query.chapter,
+          username: store.getUser?.username,
+          page: 0
+        }
+      },
+      null,
+      null,
+      true
+    );
   }
+  
+  await apiAsync(
+    getRegister({
+      id: route.query.chapter
+    }, 'book'),
+    (rs) => data.value = rs
+  )
+  
+  if(!isNil(progress.value) && progress.value.nameChapter === useGet(data.value, 'chapterId'))
+    indexPage.value = progress.value.page;
+  else
+    indexPage.value = 0;
 
-  try{
-    const result = await getRegister('book', route.query.chapter)
-
-    if(!isNil(progress.value) && progress.value.nameChapter === result.chapterId)
-      indexPage.value = progress.value.page;
-    else
-      indexPage.value = 0;
-
-    data.value = result;
-  }catch(err){
-    console.log(err);
-  }
-
-  try{
-    const result = await getStatus('book', route.query.name)
-    chapters.value = result;
-  }catch(err){
-    console.log(err);
-  }
+  await apiAsync(
+    getStatus({
+      name: route.query.name
+    }, 'book'),
+    (data) => chapters.value = data,
+      null,
+      null,
+      null,
+      true
+  );
   
   if(!isNil(progress.value))
   {
@@ -495,10 +512,6 @@ function resume(){
   activeModal.value = '';
   notSaveProgress.value = true;
   router.push(`/room?type=manga&chapter=${progress.value.nameChapter}&nameCfg=${route.query.nameCfg}&name=${route.query.name}`)
-}
-
-function close() {
-  router.push('/')
 }
 </script>
 

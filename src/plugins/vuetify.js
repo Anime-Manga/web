@@ -58,6 +58,15 @@ export default defineNuxtPlugin(nuxtApp => {
                 bookSkull: 'fa-solid fa-book-skull',
                 check: 'fa-solid fa-check',
                 info: 'fa-solid fa-circle-info',
+                play: 'fa-solid fa-play',
+                pause: 'fa-solid fa-pause',
+                fullVideo: 'fa-solid fa-expand',
+                speak: 'fa-solid fa-volume-high',
+                muted: 'fa-solid fa-volume-xmark',
+                request: 'fa-solid fa-code-pull-request',
+                hourglass: 'fa-solid fa-hourglass',
+                approve: 'fa-solid fa-thumbs-up',
+                blacklist: 'fa-solid fa-person-military-pointing'
             },
             sets: {
                 fa

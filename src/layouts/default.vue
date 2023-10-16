@@ -7,5 +7,6 @@
     >
       <NuxtPage />
     </v-main>
+    <Notification />
   </v-app>
 </template>

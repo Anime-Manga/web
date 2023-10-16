@@ -49,7 +49,7 @@ const {isNil} = useLodash();
 const store = useStore();
 
 //api
-const {getByName} = useApi();
+const {getByName, apiAsync} = useApi();
 
 //variabvles
 const activeModal = ref(null);
@@ -86,10 +86,16 @@ async function details() {
   if (!_.isNil(item.value.exists) && item.value.exists === true) {
     const {nameCfg} = store.getSchemasBySelectSearch
 
-    data.value = await getByName(item.value.typeView, item.value.name, nameCfg)
-    activeModal.value = 'detailsCard'
-  } else
-    activeModal.value = 'detailsCard'
+    await apiAsync(
+      getByName({
+        name: item.value.name,
+        nameCfg
+      }, item.value.typeView),
+      (rs) => data.value = rs
+    )
+  }
+  
+  activeModal.value = 'detailsCard'
 }
 
 function closeDialog() {

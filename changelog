@@ -5,6 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Released]
+## [2.1.0] - 16-10-2023
+### Added
+- label "alpha" for share room
+- Lib notify
+
+### Fixed
+- Events with WS when room is shared
+- With custom controls maybe improved experience with share room
+
+### Changed
+- Use axios
+- Show pages when finished download image
+- Only administrator can direct download book/video and he can accept or reject or add to blacklist the request
+from guest or basic account
+- Controls of the video
+
 ## [2.0.1] - 17-06-2023
 ### Added
 - use default cookie for set auth with encryption

@@ -31,7 +31,7 @@
           nav
       >
         <v-list-item
-            v-for="item in items"
+            v-for="item in listItems"
             :key="item.id"
             :to="item.route"
         >
@@ -49,8 +49,6 @@
 </template>
 
 <script setup>
-
-
 //variables
 const select = ref();
 const show = ref(false);
@@ -59,12 +57,14 @@ const show = ref(false);
 const store = useStore();
 
 //api
-const {getCfg} = useApi();
+const {getCfg, apiAsync} = useApi();
 
-const items = ref([]);
-
-const result = await getCfg();
-store.setSchemas(result);
+onBeforeMount(async () => {
+  await apiAsync(
+    getCfg(),
+    (data) => store.setSchemas(data)
+  );
+})
 
 function getIcon(id){
   switch (id){
@@ -79,8 +79,10 @@ function getIcon(id){
   }
 }
 
-watch(() => store.getUser, () => {
-  items.value = [{
+const listItems = computed(() => {
+  let schemas = store.getSchemas;
+
+  let items = [{
     id:'all',
     text:'All local DB',
     icon:'$database',
@@ -91,12 +93,10 @@ watch(() => store.getUser, () => {
     text:'Search local DB',
     icon:'$search',
     route: '/search/search-local'
-  }]
-
-  let schemas = store.getSchemas;
+  }];
 
   for (const key in schemas) {
-    items.value.push({
+    items.push({
       'id':`search-${schemas[key].name}`,
       text:`Search ${schemas[key].name}`,
       icon: getIcon(schemas[key].name),
@@ -106,7 +106,7 @@ watch(() => store.getUser, () => {
 
   if(!isNil(store.getUser))
   {
-    items.value.push({
+    items.push({
       id:'watchList',
       text:'WatchList',
       icon: '$saved',
@@ -117,15 +117,26 @@ watch(() => store.getUser, () => {
       icon: '$logout',
       route: '/auth/logout'
     })
+
+    if(useGet(store.getUser, 'role', 0) === 100){
+      items.push({
+        id:'queue',
+        text:'request',
+        icon: '$request',
+        route: '/queue'
+      })
+    }
   }else{
-    items.value.push({
+    items.push({
       id:'login',
       text:'Login',
       icon: '$login',
       route: '/auth/login'
     })
   }
-}, {immediate: true})
+
+  return items;
+})
 </script>
 
 <style lang="scss" scoped>

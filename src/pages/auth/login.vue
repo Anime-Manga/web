@@ -48,7 +48,7 @@
 <script setup>
 import _ from 'lodash'
 const { createCookie } = useAuth()
-const { login } = useApi();
+const { login, apiAsync } = useApi();
 const store = useStore();
 
 const username = ref(null);
@@ -58,15 +58,18 @@ const failedLogin = ref(false);
 
 async function loginAccount() {
   failedLogin.value = false;
-
-  try{
-    const data = await login({username: username.value, password: password.value});
-    createCookie(data);
-    store.setUser(data);
-    navigateTo('/');
-  }catch{
-    failedLogin.value = true;
-  }
+  
+  apiAsync(
+    login({username: username.value, password: password.value}),
+    (data) => {
+      createCookie(data);
+      store.setUser(data);
+      navigateTo('/');
+    },
+    () => {
+      failedLogin.value = true;
+    }
+  );
 }
 </script>
 

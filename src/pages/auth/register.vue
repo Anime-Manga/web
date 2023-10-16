@@ -35,6 +35,14 @@
       >
         Confirm register
       </v-btn>
+      <v-btn
+          block
+          class="mb-3"
+          color="secondary"
+          @click="navigateTo('/auth/login')"
+      >
+        Back to login
+      </v-btn>
 
       <v-alert
           density="compact"
@@ -54,7 +62,7 @@ import {isNil} from "lodash";
 definePageMeta({auth: false})
 
 //api
-const {registerAccount} = useApi();
+const {registerAccount, apiAsync} = useApi();
 
 const username = ref(null);
 const password = ref(null);
@@ -94,16 +102,25 @@ async function register(){
     messagesError.value = "Password must have one upper character";
     return;
   }
-
-  try {
-    let result = await registerAccount(username.value, password.value);
-    navigateTo('/auth/login')
-  }catch(e){
-    if(e.toString().indexOf('409') !== -1)
-      messagesError.value = "The name already exists";
-    else
-      messagesError.value = "Error Generic";
-  }
+  
+  await apiAsync(
+    registerAccount(null, {
+      username: username.value,
+      password: password.value
+    }),
+    () => navigateTo('/auth/login'),
+    (err) => {
+      if(err.toString().indexOf('409') !== -1)
+        messagesError.value = "The name already exists";
+      else
+        messagesError.value = "Error Generic";
+    },
+    null,
+    {
+      409: "The name already exists",
+      500: "Error Generic"
+    }
+  )
 }
 </script>
 
