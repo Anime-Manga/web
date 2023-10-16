@@ -9,7 +9,7 @@
         <template v-if="!modeList">
           <div class="d-flex flex-row align-center justify-center">
             <div
-                v-if="indexPage > 0 && (!modeMobile)"
+                v-if="indexPage > 0 && (!modeMobile) && !loadingImage"
                 class="btn-page"
                 @click="previousPage"
             >
@@ -34,9 +34,9 @@
                   :src="getUrl()"
                   class="img-page pa-1"
                   @click="changePage"
-                  :onerror="openDialogCertificate(hostHTTP)"
+                  :onerror="() => openDialogCertificate(hostHTTP)"
               />
-              <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
+              <div v-if="loadingImage" class="d-flex align-center justify-center fill-height" style="overflow: hidden;">
                 <v-progress-circular
                     color="primary"
                     size="100"
@@ -46,7 +46,7 @@
               </div>
             </div>
             <div
-                v-if="data && indexPage < (data.chapterPath.length - 1) && (!modeMobile)"
+                v-if="data && indexPage < (data.chapterPath.length - 1) && (!modeMobile) && !loadingImage"
                 class="btn-page"
                 @click="nextPage"
             >
@@ -77,9 +77,9 @@
                 ref="imgBooks"
                 class="img-page"
                 v-show="!loadingImage"
-                :onerror="openDialogCertificate(hostHTTP)"
+                :onerror="() => openDialogCertificate(hostHTTP)"
             />
-            <div v-if="loadingImage" class="d-flex align-center justify-center fill-height">
+            <div v-if="loadingImage" class="d-flex align-center justify-center fill-height" style="overflow: hidden;">
               <v-progress-circular
                   bg-color="secondary"
                   color="primary"
@@ -465,18 +465,16 @@ async function load() {
         progress.value = {
           nameCfg: route.query.nameCfg,
           name: route.query.name,
-          nameChapter: route.query.name,
+          nameChapter: route.query.chapter,
           username: store.getUser?.username,
           page: 0
         }
-      }
+      },
+      null,
+      null,
+      true
     );
   }
-  
-  if(!isNil(progress.value) && progress.value.nameChapter === result.chapterId)
-    indexPage.value = progress.value.page;
-  else
-    indexPage.value = 0;
   
   await apiAsync(
     getRegister({
@@ -484,6 +482,11 @@ async function load() {
     }, 'book'),
     (rs) => data.value = rs
   )
+  
+  if(!isNil(progress.value) && progress.value.nameChapter === useGet(data.value, 'chapterId'))
+    indexPage.value = progress.value.page;
+  else
+    indexPage.value = 0;
 
   await apiAsync(
     getStatus({

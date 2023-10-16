@@ -539,7 +539,10 @@ async function getProgressStatus() {
           minutes: 0,
           seconds: 0
         }
-      }
+      },
+      null,
+      null,
+      true
     );
   }
 }
