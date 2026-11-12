@@ -1,9 +1,0 @@
-<template>
-  <div
-      class="fill-height"
-  >
-    <searchComponent
-      typeSearch="all"
-    />
-  </div>
-</template>
