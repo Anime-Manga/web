@@ -14,6 +14,10 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2026-06-30',
 
+  runtimeConfig:{
+    urlApi: process.env.URL_API || "http://127.0.0.1:3000/"
+  },
+
   eslint: {
     config: {
       stylistic: {
